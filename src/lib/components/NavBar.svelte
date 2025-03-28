@@ -3,49 +3,114 @@
     
 	let activePage = $derived(page.url.pathname);
 	let isDev = $state(import.meta.env.DEV);
+	let isMenuOpen = $state(false);
+
+	function toggleMenu() {
+		isMenuOpen = !isMenuOpen;
+	}
 </script>
 
-<nav class="navbar navbar-dark bg-primary">
-    <div class="container-fluid d-flex justify-content-between align-items-center">
-        <div class="d-flex align-items-center">
-            <a class="navbar-brand d-flex align-items-center gap-2" href="/" data-sveltekit-preload-data="hover">
-                <i class="bi bi-arrow-repeat"></i>
-                Uturn Hiring
-            </a>
-            {@render navMainBtn('Positions', '/positions', 'bi bi-list-ul')}
-            {@render navMainBtn('Candidates', '/candidates', 'bi bi-people')}
-        </div>
-        <div class="d-flex align-items-center">
-            {@render navMainBtn('Profile', '/profile', 'bi bi-person-circle')}
+<nav class="navbar navbar-expand-md">
+    <div class="container-fluid px-3">
+        <a class="navbar-brand d-flex align-items-center" href="/" data-sveltekit-preload-data="hover">
+            <i class="bi bi-arrow-repeat brand-icon"></i>
+            <span class="brand-text">Uturn</span>
             {#if isDev}
-                {@render navMainBtn('Tests', '/tests', 'bi bi-clipboard-check')}
+                <span class="dev-indicator">dev</span>
             {/if}
+        </a>
+        
+        <button 
+            class="navbar-toggler"
+            type="button" 
+            onclick={toggleMenu}
+            aria-label="Toggle navigation"
+        >
+            <i class="bi {isMenuOpen ? 'bi-x' : 'bi-list'}"></i>
+        </button>
+
+        <div class="collapse navbar-collapse {isMenuOpen ? 'show' : ''}" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                {@render navItem('Positions', '/positions', 'bi bi-list-ul')}
+                {@render navItem('Candidates', '/candidates', 'bi bi-people')}
+                {@render navItem('Profile', '/profile', 'bi bi-person')}
+                {#if isDev}
+                    {@render navItem('Tests', '/tests', 'bi bi-clipboard-check')}
+                {/if}
+            </ul>
         </div>
     </div>
 </nav>
 
-{#snippet navMainBtn(btnName, btnRoute, btnIcon)}
-    <a 
-        href={btnRoute}
-        class="nav-link {activePage === btnRoute ? 'active' : ''}"
-    >
-        <i class={btnIcon}></i>
-        {btnName}
-    </a>
+{#snippet navItem(name, route, icon)}
+    <li class="nav-item">
+        <a 
+            href={route}
+            class="nav-link {activePage === route ? 'active' : ''}"
+            onclick={() => isMenuOpen = false}
+        >
+            <i class="{icon} nav-icon"></i>
+            <span>{name}</span>
+        </a>
+    </li>
 {/snippet}
 
 <style>
     .navbar {
-        padding: 0.5rem 1rem;
+        background: #4361ee;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        padding: 0.5rem 0;
+    }
+
+    .navbar-brand {
+        font-weight: 600;
+        color: white !important;
+        gap: 0.5rem;
+    }
+
+    .brand-icon {
+        color: white;
+        font-size: 1.25rem;
+    }
+
+    .brand-text {
+        font-size: 1.25rem;
+        letter-spacing: -0.5px;
+    }
+
+    .dev-indicator {
+        font-size: 0.75rem;
+        background: rgba(255, 255, 255, 0.2);
+        padding: 0.125rem 0.375rem;
+        border-radius: 4px;
+        font-weight: 500;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+    }
+
+    .navbar-toggler {
+        border: none;
+        padding: 0.25rem;
+        color: white;
+    }
+
+    .navbar-toggler:focus {
+        box-shadow: none;
     }
 
     .nav-link {
         color: rgba(255, 255, 255, 0.85);
         padding: 0.5rem 1rem;
-        text-decoration: none;
         display: flex;
         align-items: center;
         gap: 0.5rem;
+        font-size: 0.9375rem;
+        transition: all 0.2s ease;
+    }
+
+    .nav-icon {
+        font-size: 1rem;
+        opacity: 0.75;
     }
 
     .nav-link:hover {
@@ -57,9 +122,15 @@
         font-weight: 500;
     }
 
-    .navbar-brand {
-        font-weight: 500;
-        color: white !important;
+    @media (max-width: 767.98px) {
+        .navbar-collapse {
+            padding: 1rem 0;
+            background: #4361ee;
+        }
+        
+        .nav-link {
+            padding: 0.625rem 0.75rem;
+        }
     }
 </style>
 
