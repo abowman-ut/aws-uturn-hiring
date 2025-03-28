@@ -32,10 +32,10 @@ export const actions = {
 
 export async function load() {
     // First check if environment variables are set
-    if (!process.env.AWS_ACCESS_KEY_ID || !process.env.AWS_SECRET_ACCESS_KEY) {
+    if (!process.env.MY_AWS_ACCESS_KEY_ID || !process.env.MY_AWS_SECRET_ACCESS_KEY) {
         return {
             status: 'error',
-            message: 'AWS credentials are not set. Please set AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY environment variables.'
+            message: 'AWS credentials are not set. Please set MY_AWS_ACCESS_KEY_ID and MY_AWS_SECRET_ACCESS_KEY environment variables.'
         };
     }
 
@@ -43,8 +43,8 @@ export async function load() {
         const client = new DynamoDBClient({
             region: "us-east-1",
             credentials: {
-                accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-                secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+                accessKeyId: process.env.MY_AWS_ACCESS_KEY_ID,
+                secretAccessKey: process.env.MY_AWS_SECRET_ACCESS_KEY,
             },
         });
 
