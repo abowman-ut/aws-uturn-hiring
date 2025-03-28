@@ -3,10 +3,10 @@ import { DynamoDBDocumentClient, PutCommand, GetCommand, QueryCommand } from "@a
 
 // Initialize the DynamoDB client
 const client = new DynamoDBClient({
-    region: "us-east-2", // Replace with your AWS region
+    region: process.env.MY_AWS_REGION || "us-east-1",
     credentials: {
-        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+        accessKeyId: process.env.MY_AWS_ACCESS_KEY_ID,
+        secretAccessKey: process.env.MY_AWS_SECRET_ACCESS_KEY,
     },
 });
 
@@ -14,7 +14,7 @@ const client = new DynamoDBClient({
 const docClient = DynamoDBDocumentClient.from(client);
 
 // Example table name - replace with your table name
-const TABLE_NAME = "aws-sveltekit-test";
+const TABLE_NAME = "YourTableName";
 
 // Basic CRUD operations
 export async function putItem(item) {
@@ -39,4 +39,7 @@ export async function queryItems(params) {
         ...params,
     });
     return await docClient.send(command);
-} 
+}
+
+// Export the client for other operations
+export { client }; 

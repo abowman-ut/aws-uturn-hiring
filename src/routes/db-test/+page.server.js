@@ -1,5 +1,4 @@
-import { putItem, getItem } from '$lib/dynamodb';
-import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
+import { putItem, getItem, client } from '$lib/dynamodb';
 import { ListTablesCommand } from "@aws-sdk/client-dynamodb";
 import * as dotenv from 'dotenv';
 
@@ -40,14 +39,6 @@ export async function load() {
     }
 
     try {
-        const client = new DynamoDBClient({
-            region: "us-east-1",
-            credentials: {
-                accessKeyId: process.env.MY_AWS_ACCESS_KEY_ID,
-                secretAccessKey: process.env.MY_AWS_SECRET_ACCESS_KEY,
-            },
-        });
-
         // Try to list tables to verify connection
         const response = await client.send(new ListTablesCommand({}));
         
