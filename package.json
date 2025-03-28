@@ -17,6 +17,9 @@
 		"vite": "^6.0.0"
 	},
 	"dependencies": {
-		"amplify-adapter": "^0.2.0"
+		"@aws-sdk/client-dynamodb": "^3.777.0",
+		"@aws-sdk/lib-dynamodb": "^3.777.0",
+		"amplify-adapter": "^0.2.0",
+		"dotenv": "^16.4.7"
 	}
 }
