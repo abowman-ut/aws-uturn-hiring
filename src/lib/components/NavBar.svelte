@@ -2,6 +2,7 @@
 	import { page } from '$app/state';
     
 	let activePage = $derived(page.url.pathname);
+	let isDev = $state(import.meta.env.DEV);
 </script>
 
 <nav class="navbar navbar-dark bg-primary">
@@ -16,7 +17,9 @@
         </div>
         <div class="d-flex align-items-center">
             {@render navMainBtn('Profile', '/profile', 'bi bi-person-circle')}
-            {@render navMainBtn('Tests', '/tests', 'bi bi-clipboard-check')}
+            {#if isDev}
+                {@render navMainBtn('Tests', '/tests', 'bi bi-clipboard-check')}
+            {/if}
         </div>
     </div>
 </nav>
