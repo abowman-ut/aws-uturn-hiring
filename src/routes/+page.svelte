@@ -1,14 +1,29 @@
 <script>
     import { base } from '$app/paths';
+
+    // Using $state for any reactive values we might add later
+    let title = $state('AWS SvelteKit Test');
+
+    // Using $derived for any computed values we might add later
+    let pageTitle = $derived(title);
+
+    // Using $effect for any side effects we might add later
+    $effect(() => {
+        document.title = pageTitle;
+    });
 </script>
 
+{#snippet navLink(href, text)}
+    <li>
+        <a {href}>{text}</a>
+    </li>
+{/snippet}
+
 <div class="container">
-    <h1>AWS SvelteKit Test</h1>
+    <h1>{title}</h1>
     <nav>
         <ul>
-            <li>
-                <a href="{base}/db-test">DynamoDB Connection Test</a>
-            </li>
+            {@render navLink(`${base}/db-test`, 'DynamoDB Connection Test')}
         </ul>
     </nav>
 </div>
