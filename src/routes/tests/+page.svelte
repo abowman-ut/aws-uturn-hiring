@@ -2,6 +2,8 @@
     import { base } from '$app/paths';
     let title = $state('AWS SvelteKit Test');
     let pageTitle = $derived(title);
+    let positionsTestResult = $state(null);
+    let candidatesTestResult = $state(null);
     
     $effect(() => {
         document.title = pageTitle;
@@ -9,6 +11,122 @@
 
     let { data } = $props();
     let dbStatusClass = $derived(data?.dbStatus?.status === 'success' ? 'success' : 'error');
+
+    async function testPositionsAPI() {
+        try {
+            // Test POST
+            const newPosition = {
+                title: 'Test Position',
+                description: 'This is a test position',
+                requirements: 'Test requirements',
+                status: 'open'
+            };
+            
+            const createResponse = await fetch('/api/positions', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newPosition)
+            });
+            
+            if (!createResponse.ok) throw new Error('Failed to create position');
+            const createdPosition = await createResponse.json();
+            
+            // Test GET (single)
+            const getResponse = await fetch(`/api/positions?id=${createdPosition.id}`);
+            if (!getResponse.ok) throw new Error('Failed to get position');
+            const fetchedPosition = await getResponse.json();
+            
+            // Test PUT
+            const updatedPosition = {
+                ...fetchedPosition,
+                title: 'Updated Test Position'
+            };
+            
+            const updateResponse = await fetch('/api/positions', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(updatedPosition)
+            });
+            
+            if (!updateResponse.ok) throw new Error('Failed to update position');
+            
+            // Test DELETE
+            const deleteResponse = await fetch(`/api/positions?id=${createdPosition.id}`, {
+                method: 'DELETE'
+            });
+            
+            if (!deleteResponse.ok) throw new Error('Failed to delete position');
+            
+            positionsTestResult = {
+                success: true,
+                message: 'All position API tests passed successfully!'
+            };
+        } catch (error) {
+            positionsTestResult = {
+                success: false,
+                message: `Position API test failed: ${error.message}`
+            };
+        }
+    }
+
+    async function testCandidatesAPI() {
+        try {
+            // Test POST
+            const newCandidate = {
+                name: 'Test Candidate',
+                email: 'test@example.com',
+                phone: '123-456-7890',
+                resume: 'Test resume content',
+                status: 'new',
+                positionId: 'test-position-id'
+            };
+            
+            const createResponse = await fetch('/api/candidates', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newCandidate)
+            });
+            
+            if (!createResponse.ok) throw new Error('Failed to create candidate');
+            const createdCandidate = await createResponse.json();
+            
+            // Test GET (single)
+            const getResponse = await fetch(`/api/candidates?id=${createdCandidate.id}`);
+            if (!getResponse.ok) throw new Error('Failed to get candidate');
+            const fetchedCandidate = await getResponse.json();
+            
+            // Test PUT
+            const updatedCandidate = {
+                ...fetchedCandidate,
+                name: 'Updated Test Candidate'
+            };
+            
+            const updateResponse = await fetch('/api/candidates', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(updatedCandidate)
+            });
+            
+            if (!updateResponse.ok) throw new Error('Failed to update candidate');
+            
+            // Test DELETE
+            const deleteResponse = await fetch(`/api/candidates?id=${createdCandidate.id}`, {
+                method: 'DELETE'
+            });
+            
+            if (!deleteResponse.ok) throw new Error('Failed to delete candidate');
+            
+            candidatesTestResult = {
+                success: true,
+                message: 'All candidate API tests passed successfully!'
+            };
+        } catch (error) {
+            candidatesTestResult = {
+                success: false,
+                message: `Candidate API test failed: ${error.message}`
+            };
+        }
+    }
 </script>
 
 <div class="page-container">
@@ -49,6 +167,46 @@
                     </div>
                 </div>
             {/if}
+        </div>
+
+        <!-- API Tests Section -->
+        <div class="test-section">
+            <div class="section-header">
+                <i class="bi bi-code-square text-primary"></i>
+                <h2>API Tests</h2>
+            </div>
+
+            <!-- Positions API Tests -->
+            <div class="api-test-group">
+                <h3>Positions API</h3>
+                <div class="test-controls">
+                    <button class="btn btn-primary" onclick={testPositionsAPI}>
+                        <i class="bi bi-play-fill"></i> Run Tests
+                    </button>
+                </div>
+                {#if positionsTestResult}
+                    <div class="test-result {positionsTestResult.success ? 'success' : 'error'}">
+                        <i class="bi {positionsTestResult.success ? 'bi-check-circle-fill' : 'bi-x-circle-fill'}"></i>
+                        <span>{positionsTestResult.message}</span>
+                    </div>
+                {/if}
+            </div>
+
+            <!-- Candidates API Tests -->
+            <div class="api-test-group">
+                <h3>Candidates API</h3>
+                <div class="test-controls">
+                    <button class="btn btn-primary" onclick={testCandidatesAPI}>
+                        <i class="bi bi-play-fill"></i> Run Tests
+                    </button>
+                </div>
+                {#if candidatesTestResult}
+                    <div class="test-result {candidatesTestResult.success ? 'success' : 'error'}">
+                        <i class="bi {candidatesTestResult.success ? 'bi-check-circle-fill' : 'bi-x-circle-fill'}"></i>
+                        <span>{candidatesTestResult.message}</span>
+                    </div>
+                {/if}
+            </div>
         </div>
     </div>
 </div>
@@ -207,5 +365,71 @@
             height: 2rem;
             font-size: 1.25rem;
         }
+    }
+
+    .api-test-group {
+        background: white;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        border: 1px solid #e2e8f0;
+    }
+
+    .api-test-group h3 {
+        color: #1e293b;
+        font-size: 1.25rem;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .test-controls {
+        margin-bottom: 1rem;
+    }
+
+    .test-result {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem;
+        border-radius: 6px;
+        font-size: 0.9375rem;
+    }
+
+    .test-result.success {
+        background: #dcfce7;
+        color: #166534;
+        border: 1px solid #86efac;
+    }
+
+    .test-result.error {
+        background: #fee2e2;
+        color: #991b1b;
+        border: 1px solid #fca5a5;
+    }
+
+    .test-result i {
+        font-size: 1.25rem;
+    }
+
+    :global(.btn) {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+    }
+
+    :global(.btn-primary) {
+        background: #4361ee;
+        color: white;
+        border: none;
+    }
+
+    :global(.btn-primary:hover) {
+        background: #3651d4;
     }
 </style> 
