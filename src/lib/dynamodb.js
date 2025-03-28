@@ -1,5 +1,5 @@
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { DynamoDBDocumentClient, PutCommand, GetCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
+import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
 
 // Initialize the DynamoDB client
 const client = new DynamoDBClient({
@@ -41,5 +41,5 @@ export async function queryItems(params) {
     return await docClient.send(command);
 }
 
-// Export the client for other operations
-export { client }; 
+// Export the clients for use in service layers
+export { client, docClient }; 

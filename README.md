@@ -65,18 +65,35 @@ const config = {
 };
 
 export default config;
+
+
+
 Commit the change and push the application to your Git repository.
+
 Now you are ready to deploy your SvelteKit app to Amplify.
+
 Sign in to the AWS Management Console and open the Amplify console.
+
 On the All apps page, choose Create new app.
+
 On the Start building with Amplify page, choose your Git repository provider, then choose Next.
+
 On the Add repository branch page, do the following:
+
 Select the name of the repository to connect.
+
 Select the name of the repository branch to connect.
+
 Choose Next.
+
 On the App settings page, locate the Build settings section. For Build output directory enter build.
+
 You must also update the app's frontend build commands in the build specification. To open the build specification, choose Edit YML file.
-In the amplify.yml file, locate the frontend build commands section. Enter - cd build/compute/default/ and - npm i --production.
+
+In the amplify.yml file, locate the frontend build commands section. 
+
+Enter - cd build/compute/default/ and - npm i --production.
+
 Your build settings file should look like the following.
 
 version: 1
@@ -100,6 +117,9 @@ frontend:
             - '.npm/**/*'
             
 Choose Save.
+
 If you want Amplify to be able to deliver app logs to Amazon CloudWatch Logs, you must explicitly enable this in the console. Open the Advanced settings section, then choose Enable SSR app logs in the Server-Side Rendering (SSR) deployment section.
+
 Choose Next.
+
 On the Review page, choose Save and deploy.
