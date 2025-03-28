@@ -1,0 +1,10 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Limits
+
+- Do not use typescritpt. 
+- Do not use stores.
+- Do not overwrite .env without first asking and then confirming.
