@@ -19,8 +19,8 @@
 
 	.main-content {
 		min-height: calc(100vh - 56px);
-		padding: 1.5rem;
-		max-width: 1200px;
+		padding: 0.5rem;
+		max-width: 1400px;
 		margin: 0 auto;
 	}
 
