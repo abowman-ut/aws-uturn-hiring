@@ -1,5 +1,6 @@
 <script>
     import { base } from '$app/paths';
+    import { slide } from 'svelte/transition';
     let title = $state('Positions');
     let pageTitle = $derived(title);
     let positions = $state([]);
@@ -9,7 +10,7 @@
     let formSuccess = $state(null);
     let selectedDepartment = $state('');
     let selectedTimeline = $state('');
-    let currentStage = $state('cv_review');
+    let showFilters = $state(true);
 
     // Form data
     let newPosition = $state({
@@ -19,11 +20,8 @@
         timeline: ''
     });
 
-    const STAGES = [
-        { id: 'cv_review', name: 'CV Review', icon: 'bi-file-text' },
-        { id: 'culture_fit', name: 'Culture Fit', icon: 'bi-people' },
-        { id: 'interview', name: 'Interview', icon: 'bi-code-square' }
-    ];
+    const DEPARTMENTS = ['Engineering', 'Management', 'Sales'];
+    const TIMELINES = ['Q1', 'Q2', 'Q3', 'Q4'];
 
     // Load data when component mounts
     $effect(() => {
@@ -110,467 +108,168 @@
     }
 </script>
 
-<div class="page-container">
-    <div class="content-card">
-        <!-- Top Filters -->
-        <div class="top-filters">
-            <span class="filter-label">Filter by:</span>
-            <select bind:value={selectedDepartment} class="filter-select">
-                <option value="">All Departments</option>
-                <option value="Engineering">Engineering</option>
-                <option value="Management">Management</option>
-                <option value="Sales">Sales</option>
-            </select>
-            <select bind:value={selectedTimeline} class="filter-select">
-                <option value="">All Timelines</option>
-                <option value="Q1">Q1</option>
-                <option value="Q2">Q2</option>
-                <option value="Q3">Q3</option>
-                <option value="Q4">Q4</option>
-            </select>
-        </div>
+<div class="container-fluid py-3">
+    <div class="row g-3">
+        <!-- Sidebar with entry form -->
+        <div class="col-12 col-lg-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">Add New Position</h5>
+                    <form onsubmit={(e) => { e.preventDefault(); handleSubmit(e); }}>
+                        <div class="mb-3">
+                            <input 
+                                type="text" 
+                                class="form-control"
+                                bind:value={newPosition.title}
+                                placeholder="Position Title"
+                                required
+                            />
+                        </div>
 
-        <!-- Add Position Form -->
-        <div class="add-form-container">
-            <form onsubmit={(e) => { e.preventDefault(); handleSubmit(e); }}>
-                <div class="form-row">
-                    <input 
-                        type="text" 
-                        bind:value={newPosition.title}
-                        placeholder="Position Title"
-                        required
-                    />
+                        <div class="mb-3">
+                            <select class="form-select" bind:value={newPosition.department} required>
+                                <option value="">Department</option>
+                                {#each DEPARTMENTS as department}
+                                    <option value={department}>{department}</option>
+                                {/each}
+                            </select>
+                        </div>
 
-                    <select bind:value={newPosition.department} required>
-                        <option value="">Department</option>
-                        <option value="Engineering">Engineering</option>
-                        <option value="Management">Management</option>
-                        <option value="Sales">Sales</option>
-                    </select>
+                        <div class="mb-3">
+                            <input 
+                                type="text" 
+                                class="form-control"
+                                bind:value={newPosition.hiringManager}
+                                placeholder="Hiring Manager"
+                                required
+                            />
+                        </div>
 
-                    <input 
-                        type="text" 
-                        bind:value={newPosition.hiringManager}
-                        placeholder="Hiring Manager"
-                        required
-                    />
+                        <div class="mb-3">
+                            <select class="form-select" bind:value={newPosition.timeline} required>
+                                <option value="">Timeline</option>
+                                {#each TIMELINES as timeline}
+                                    <option value={timeline}>{timeline}</option>
+                                {/each}
+                            </select>
+                        </div>
 
-                    <select bind:value={newPosition.timeline} required>
-                        <option value="">Timeline</option>
-                        <option value="Q1">Q1</option>
-                        <option value="Q2">Q2</option>
-                        <option value="Q3">Q3</option>
-                        <option value="Q4">Q4</option>
-                    </select>
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-secondary" onclick={resetForm}>
+                                Cancel
+                            </button>
+                            <button type="submit" class="btn btn-primary" disabled={isSubmitting}>
+                                {isSubmitting ? 'Adding...' : 'Add'}
+                            </button>
+                        </div>
+
+                        {#if formError}
+                            <div class="alert alert-danger mt-3">
+                                <i class="bi bi-exclamation-circle-fill me-2"></i>
+                                {formError}
+                            </div>
+                        {/if}
+
+                        {#if formSuccess}
+                            <div class="alert alert-success mt-3">
+                                <i class="bi bi-check-circle-fill me-2"></i>
+                                {formSuccess}
+                            </div>
+                        {/if}
+                    </form>
                 </div>
-
-                <div class="form-actions">
-                    <button type="button" class="btn-secondary" onclick={resetForm}>
-                        Cancel
-                    </button>
-                    <button type="submit" class="btn-primary" disabled={isSubmitting}>
-                        {isSubmitting ? 'Adding...' : 'Add Position'}
-                    </button>
-                </div>
-
-                {#if formError}
-                    <div class="alert-error">
-                        <i class="bi bi-exclamation-circle-fill"></i>
-                        {formError}
-                    </div>
-                {/if}
-
-                {#if formSuccess}
-                    <div class="alert-success">
-                        <i class="bi bi-check-circle-fill"></i>
-                        {formSuccess}
-                    </div>
-                {/if}
-            </form>
-
-            <div class="positions-count">
-                Showing {getFilteredPositions().length} of {positions.length} positions
             </div>
         </div>
 
-        <!-- Positions List -->
-        <div class="positions-list">
-            {#if getFilteredPositions().length === 0}
-                <div class="empty-state">
-                    <i class="bi bi-briefcase"></i>
-                    <span>No positions found</span>
-                </div>
-            {:else}
-                {#each getFilteredPositions() as position}
-                    <div class="position-card">
-                        <div class="position-header">
-                            <div class="position-title">
-                                <h3>{position.title}</h3>
-                                <span class="department-badge">{position.department}</span>
-                            </div>
-                            <div class="position-actions">
-                                <span class="timeline-tag">
-                                    <i class="bi bi-calendar"></i>
-                                    {position.timeline}
-                                </span>
-                                <button 
-                                    class="btn-delete" 
-                                    onclick={() => deletePosition(position.id)}
-                                    title="Delete position"
-                                    aria-label="Delete position"
-                                >
-                                    <i class="bi bi-trash"></i>
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <div class="position-details">
-                            <div class="detail-group">
-                                <i class="bi bi-person"></i>
-                                <span>{position.hiringManager}</span>
-                            </div>
-                        </div>
-                    </div>
-                {/each}
-            {/if}
-        </div>
+        <!-- Main Content -->
+        <div class="col">
+            <div class="card">
+                <div class="card-body">
+                    <!-- Filters Toggle -->
+                    <button 
+                        type="button" 
+                        class="btn btn-link d-flex align-items-center w-100 text-start text-decoration-none mb-3" 
+                        onclick={() => showFilters = !showFilters}
+                    >
+                        <i class="bi bi-filter-circle-fill me-2"></i>
+                        <span class="me-auto">Filters</span>
+                        <small class="text-muted">Showing {getFilteredPositions().length} of {positions.length} positions &nbsp; </small>
+                        <i class="bi bi-chevron-{showFilters ? 'up' : 'down'}"></i>
+                    </button>
 
-        <!-- Stages -->
-        <div class="stages-container">
-            {#each STAGES as stage}
-                <div class="stage-card {stage.id === currentStage ? 'current' : ''} {stage.id === 'hired' || stage.id === 'rejected' ? 'final-stage' : ''}">
-                    <div class="stage-icon">
-                        <i class="bi {stage.icon}"></i>
-                    </div>
-                    <div class="stage-info">
-                        <h3>{stage.name}</h3>
-                        <p class="stage-description">
-                            {#if stage.id === 'cv_review'}
-                                Initial review of candidate's CV and qualifications
-                            {:else if stage.id === 'culture_fit'}
-                                Assessment of cultural alignment and soft skills
-                            {:else if stage.id === 'interview'}
-                                Technical and behavioral interview process
-                            {:else if stage.id === 'hired'}
-                                Candidate has been hired
-                            {:else if stage.id === 'rejected'}
-                                Candidate has been rejected
-                            {/if}
-                        </p>
+                    <!-- Filters Section with Transition -->
+                    {#if showFilters}
+                        <div class="mb-4" transition:slide={{ duration: 200 }}>
+                            <div class="row g-3">
+                                <div class="col-12 col-md-6">
+                                    <select class="form-select" bind:value={selectedDepartment}>
+                                        <option value="">All Departments</option>
+                                        {#each DEPARTMENTS as department}
+                                            <option value={department}>{department}</option>
+                                        {/each}
+                                    </select>
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <select class="form-select" bind:value={selectedTimeline}>
+                                        <option value="">All Timelines</option>
+                                        {#each TIMELINES as timeline}
+                                            <option value={timeline}>{timeline}</option>
+                                        {/each}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    {/if}
+
+                    <!-- Positions List -->
+                    <div class="positions-list">
+                        {#if getFilteredPositions().length === 0}
+                            <div class="text-center text-muted py-5">
+                                <i class="bi bi-briefcase display-4"></i>
+                                <p class="mt-2">No positions found</p>
+                            </div>
+                        {:else}
+                            {#each getFilteredPositions() as position}
+                                <div class="card mb-3">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-start mb-3">
+                                            <div>
+                                                <h5 class="card-title mb-1">{position.title}</h5>
+                                                <span class="badge bg-primary">
+                                                    {position.department}
+                                                </span>
+                                            </div>
+                                            <div class="d-flex align-items-center gap-3">
+                                                <span class="text-muted">
+                                                    <i class="bi bi-calendar me-1"></i>
+                                                    {position.timeline}
+                                                </span>
+                                                <button 
+                                                    class="btn btn-outline-danger btn-sm"
+                                                    onclick={() => deletePosition(position.id)}
+                                                    title="Delete position"
+                                                    aria-label="Delete {position.title} position"
+                                                >
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="d-flex align-items-center text-muted">
+                                            <i class="bi bi-person me-2"></i>
+                                            <span>{position.hiringManager}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            {/each}
+                        {/if}
                     </div>
                 </div>
-            {/each}
+            </div>
         </div>
     </div>
 </div>
 
 <style>
-    .page-container {
-        max-width: 1800px;
-        margin: 0 auto;
-        padding: 0.5rem;
-    }
 
-    .content-card {
-        background: white;
-        border-radius: 12px;
-        padding: 1.5rem;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-    }
-
-    .top-filters {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        margin-bottom: 2rem;
-    }
-
-    .filter-label {
-        color: #64748b;
-        font-size: 0.875rem;
-    }
-
-    .filter-select {
-        padding: 0.5rem 0.75rem;
-        background: white;
-        border: 1px solid #e2e8f0;
-        border-radius: 6px;
-        font-size: 0.875rem;
-        color: #1e293b;
-        cursor: pointer;
-    }
-
-    .add-form-container {
-        background: white;
-        border: 1px solid #e2e8f0;
-        border-radius: 8px;
-        padding: 1.5rem;
-        margin-bottom: 2rem;
-    }
-
-    .form-row {
-        display: flex;
-        gap: 1rem;
-        margin-bottom: 1rem;
-    }
-
-    .form-row > * { flex: 1; }
-
-    input, select {
-        padding: 0.5rem;
-        border: 1px solid #e2e8f0;
-        border-radius: 6px;
-        font-size: 0.875rem;
-    }
-
-    .form-actions {
-        display: flex;
-        gap: 0.5rem;
-        justify-content: flex-end;
-    }
-
-    .form-actions button {
-        min-width: 100px;
-        padding: 0.75rem 1rem;
-        border-radius: 6px;
-        font-size: 0.875rem;
-        cursor: pointer;
-    }
-
-    .btn-primary {
-        background: #3b82f6;
-        color: white;
-        border: none;
-    }
-
-    .btn-primary:hover { background: #2563eb; }
-    .btn-primary:disabled { opacity: 0.7; cursor: not-allowed; }
-
-    .btn-secondary {
-        background: #f1f5f9;
-        color: #475569;
-        border: 1px solid #e2e8f0;
-    }
-
-    .btn-secondary:hover { background: #e2e8f0; }
-
-    .positions-count {
-        color: #64748b;
-        font-size: 0.875rem;
-        text-align: right;
-        margin-top: 1rem;
-    }
-
-    .positions-list {
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
-    }
-
-    .position-card {
-        background: white;
-        border: 1px solid #e2e8f0;
-        border-radius: 8px;
-        padding: 1.5rem;
-    }
-
-    .position-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        margin-bottom: 1rem;
-    }
-
-    .position-title {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-    }
-
-    .position-title h3 {
-        margin: 0;
-        color: #1e293b;
-        font-size: 1.25rem;
-    }
-
-    .position-actions {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-    }
-
-    .timeline-tag {
-        display: flex;
-        align-items: center;
-        gap: 0.25rem;
-        color: #64748b;
-        font-size: 0.875rem;
-    }
-
-    .position-details {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 1rem;
-        margin-bottom: 1rem;
-    }
-
-    .detail-group {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        color: #64748b;
-        font-size: 0.875rem;
-    }
-
-    .department-badge {
-        padding: 0.25rem 0.75rem;
-        border-radius: 9999px;
-        font-size: 0.75rem;
-        font-weight: 500;
-        text-transform: capitalize;
-        background: #dbeafe;
-        color: #1e40af;
-    }
-
-    .empty-state {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 0.5rem;
-        padding: 2rem;
-        color: #64748b;
-        text-align: center;
-    }
-
-    .empty-state i {
-        font-size: 2rem;
-    }
-
-    .alert {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        padding: 0.75rem;
-        border-radius: 6px;
-        margin: 1rem 0;
-        font-size: 0.875rem;
-    }
-
-    .alert-error {
-        background: #fee2e2;
-        color: #991b1b;
-        border: 1px solid #fca5a5;
-    }
-
-    .alert-success {
-        background: #dcfce7;
-        color: #166534;
-        border: 1px solid #86efac;
-    }
-
-    .btn-delete {
-        background: none;
-        border: none;
-        color: #ef4444;
-        cursor: pointer;
-        padding: 0.25rem;
-        border-radius: 4px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .btn-delete:hover {
-        background: #fee2e2;
-    }
-
-    @media (max-width: 767.98px) {
-        .content-card {
-            padding: 1.5rem;
-        }
-
-        .form-row {
-            flex-direction: column;
-        }
-
-        .form-actions {
-            flex-direction: row;
-            justify-content: flex-end;
-            margin-top: 1rem;
-        }
-
-        .position-header {
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-
-        .position-actions {
-            width: 100%;
-            justify-content: flex-start;
-        }
-
-        .timeline-tag {
-            width: 100%;
-            justify-content: flex-start;
-        }
-    }
-
-    .stages-container {
-        display: flex;
-        gap: 1rem;
-        margin-top: 2rem;
-        padding: 1rem;
-        background: #f8fafc;
-        border-radius: 8px;
-    }
-
-    .stage-card {
-        background: white;
-        border: 1px solid #e2e8f0;
-        border-radius: 8px;
-        padding: 1.5rem;
-        flex: 1;
-        transition: all 0.2s ease;
-    }
-
-    .stage-card.current {
-        border-color: #3b82f6;
-        box-shadow: 0 0 0 2px #bfdbfe;
-    }
-
-    .stage-card.final-stage {
-        background: #f8fafc;
-    }
-
-    .stage-icon {
-        display: flex;
-        justify-content: center;
-        margin-bottom: 1rem;
-        font-size: 1.5rem;
-        color: #3b82f6;
-    }
-
-    .stage-info {
-        text-align: center;
-    }
-
-    .stage-info h3 {
-        margin: 0;
-        color: #1e293b;
-        font-size: 1.25rem;
-        font-weight: 600;
-    }
-
-    .stage-description {
-        color: #64748b;
-        font-size: 0.875rem;
-        margin: 0.5rem 0 0;
-        line-height: 1.5;
-    }
-
-    @media (max-width: 767.98px) {
-        .stages-container {
-            flex-direction: column;
-        }
-    }
 </style> 
