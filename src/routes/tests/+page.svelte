@@ -143,20 +143,38 @@
             const positions = [
                 {
                     title: 'Senior Software Engineer',
+                    department: 'Engineering',
+                    hiringManager: 'Sarah Chen',
+                    timeline: 'Q2',
                     description: 'Looking for an experienced software engineer to join our team',
                     requirements: '5+ years experience, React, Node.js, AWS',
                     status: 'open'
                 },
                 {
                     title: 'Product Manager',
+                    department: 'Management',
+                    hiringManager: 'Michael Rodriguez',
+                    timeline: 'Q3',
                     description: 'Seeking a product manager to drive our product development',
                     requirements: '3+ years PM experience, Agile, User Research',
                     status: 'open'
                 },
                 {
                     title: 'UX Designer',
+                    department: 'Engineering',
+                    hiringManager: 'Emily Thompson',
+                    timeline: 'Q1',
                     description: 'Join our design team to create beautiful user experiences',
                     requirements: '3+ years UX experience, Figma, User Testing',
+                    status: 'open'
+                },
+                {
+                    title: 'Sales Director',
+                    department: 'Sales',
+                    hiringManager: 'David Wilson',
+                    timeline: 'Q4',
+                    description: 'Lead our sales team to drive revenue growth',
+                    requirements: '8+ years sales experience, Team Leadership, B2B Sales',
                     status: 'open'
                 }
             ];
@@ -235,7 +253,7 @@
 
             testDataResult = {
                 success: true,
-                message: 'Successfully generated test data: 3 positions and 9 candidates'
+                message: 'Successfully generated test data: 4 positions and 12 candidates'
             };
 
             // Refresh the data view
@@ -432,8 +450,23 @@
                         {#each positions as position}
                             <div class="position-card">
                                 <div class="position-header">
-                                    <h3>{position.title}</h3>
-                                    <span class="status-badge {position.status}">{position.status}</span>
+                                    <div class="position-title">
+                                        <h3>{position.title}</h3>
+                                        <span class="department-badge">{position.department}</span>
+                                    </div>
+                                    <div class="position-meta">
+                                        <span class="timeline-tag">
+                                            <i class="bi bi-calendar"></i>
+                                            {position.timeline}
+                                        </span>
+                                        <span class="status-badge {position.status}">{position.status}</span>
+                                    </div>
+                                </div>
+                                <div class="position-details">
+                                    <div class="detail-group">
+                                        <i class="bi bi-person"></i>
+                                        <span>{position.hiringManager}</span>
+                                    </div>
                                 </div>
                                 <p class="description">{position.description}</p>
                                 <p class="requirements"><strong>Requirements:</strong> {position.requirements}</p>
@@ -449,6 +482,7 @@
                                             <div class="candidate-details">
                                                 <p><i class="bi bi-envelope"></i> {candidate.email}</p>
                                                 <p><i class="bi bi-telephone"></i> {candidate.phone}</p>
+                                                <p><i class="bi bi-cash"></i> {candidate.expectedPayRange?.min ? `$${candidate.expectedPayRange.min.toLocaleString()} - $${candidate.expectedPayRange.max.toLocaleString()}` : 'Not specified'}</p>
                                             </div>
                                         </div>
                                     {/each}
@@ -877,5 +911,49 @@
         background-color: #ef4444;
         border-color: #ef4444;
         opacity: 0.7;
+    }
+
+    .position-title {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .position-meta {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .timeline-tag {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        color: #64748b;
+        font-size: 0.875rem;
+    }
+
+    .department-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        text-transform: capitalize;
+        background: #dbeafe;
+        color: #1e40af;
+    }
+
+    .position-details {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .detail-group {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: #64748b;
+        font-size: 0.875rem;
     }
 </style> 
