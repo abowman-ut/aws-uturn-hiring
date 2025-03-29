@@ -1,137 +1,149 @@
-import { json } from '@sveltejs/kit';
-import { client } from '$lib/dynamodb';
-import { 
-    PutItemCommand, 
-    GetItemCommand, 
-    UpdateItemCommand, 
-    DeleteItemCommand,
-    QueryCommand
-} from '@aws-sdk/client-dynamodb';
-import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
-
-const TABLE_NAME = import.meta.env.DEV ? 'uturn-positions-local' : 'uturn-positions';
+import { client, docClient, POSITIONS_TABLE } from '$lib/dynamodb';
+import { GetCommand, PutCommand, ScanCommand, DeleteCommand } from '@aws-sdk/lib-dynamodb';
 
 export async function GET({ url }) {
     try {
-        const positionId = url.searchParams.get('id');
-        
-        if (positionId) {
-            // Get single position
-            const command = new GetItemCommand({
-                TableName: TABLE_NAME,
-                Key: marshall({ id: positionId })
+        const id = url.searchParams.get('id');
+        console.log('GET /api/positions - ID:', id);
+        console.log('Using table:', POSITIONS_TABLE);
+        console.log('Environment:', import.meta.env.DEV ? 'development' : 'production');
+
+        if (id) {
+            const command = new GetCommand({
+                TableName: POSITIONS_TABLE,
+                Key: { id }
             });
-            
-            const result = await client.send(command);
-            
-            if (!result.Item) {
-                return json({ error: 'Position not found' }, { status: 404 });
-            }
-            
-            return json(unmarshall(result.Item));
+
+            const result = await docClient.send(command);
+            console.log('Get result:', result);
+            return new Response(JSON.stringify(result.Item), {
+                headers: { 'Content-Type': 'application/json' }
+            });
         } else {
-            // List all positions
-            const command = new QueryCommand({
-                TableName: TABLE_NAME
+            const command = new ScanCommand({
+                TableName: POSITIONS_TABLE
             });
-            
-            const result = await client.send(command);
-            
-            return json({
-                positions: result.Items.map(item => unmarshall(item))
+
+            const result = await docClient.send(command);
+            console.log('Scan result:', result);
+            return new Response(JSON.stringify(result.Items), {
+                headers: { 'Content-Type': 'application/json' }
             });
         }
     } catch (error) {
-        console.error('Error:', error);
-        return json({ error: 'Internal server error' }, { status: 500 });
+        console.error('Error in GET /api/positions:', error);
+        console.error('Error details:', {
+            name: error.name,
+            message: error.message,
+            code: error.code,
+            stack: error.stack
+        });
+        return new Response(JSON.stringify({ 
+            error: error.message,
+            details: {
+                name: error.name,
+                code: error.code
+            }
+        }), {
+            status: 500,
+            headers: { 'Content-Type': 'application/json' }
+        });
     }
 }
 
 export async function POST({ request }) {
     try {
-        const position = await request.json();
-        
-        // Generate a unique ID if not provided
-        if (!position.id) {
-            position.id = crypto.randomUUID();
-        }
-        
-        // Add timestamp
-        position.createdAt = new Date().toISOString();
-        position.updatedAt = position.createdAt;
-        
-        const command = new PutItemCommand({
-            TableName: TABLE_NAME,
-            Item: marshall(position)
+        const body = await request.json();
+        console.log('POST /api/positions - Body:', body);
+        console.log('Using table:', POSITIONS_TABLE);
+
+        const command = new PutCommand({
+            TableName: POSITIONS_TABLE,
+            Item: {
+                id: crypto.randomUUID(),
+                ...body,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            }
         });
-        
-        await client.send(command);
-        
-        return json(position, { status: 201 });
+
+        const result = await docClient.send(command);
+        console.log('Put result:', result);
+        return new Response(JSON.stringify(command.input.Item), {
+            headers: { 'Content-Type': 'application/json' }
+        });
     } catch (error) {
-        console.error('Error:', error);
-        return json({ error: 'Internal server error' }, { status: 500 });
+        console.error('Error in POST /api/positions:', error);
+        return new Response(JSON.stringify({ error: error.message }), {
+            status: 500,
+            headers: { 'Content-Type': 'application/json' }
+        });
     }
 }
 
 export async function PUT({ request }) {
     try {
-        const position = await request.json();
-        
-        if (!position.id) {
-            return json({ error: 'Position ID is required' }, { status: 400 });
+        const body = await request.json();
+        console.log('PUT /api/positions - Body:', body);
+        console.log('Using table:', POSITIONS_TABLE);
+
+        if (!body.id) {
+            return new Response(JSON.stringify({ error: 'Position ID is required' }), {
+                status: 400,
+                headers: { 'Content-Type': 'application/json' }
+            });
         }
-        
-        // Update timestamp
-        position.updatedAt = new Date().toISOString();
-        
-        const command = new UpdateItemCommand({
-            TableName: TABLE_NAME,
-            Key: marshall({ id: position.id }),
-            UpdateExpression: 'SET #title = :title, #description = :description, #requirements = :requirements, #status = :status, #updatedAt = :updatedAt',
-            ExpressionAttributeNames: {
-                '#title': 'title',
-                '#description': 'description',
-                '#requirements': 'requirements',
-                '#status': 'status',
-                '#updatedAt': 'updatedAt'
-            },
-            ExpressionAttributeValues: marshall({
-                ':title': position.title,
-                ':description': position.description,
-                ':requirements': position.requirements,
-                ':status': position.status,
-                ':updatedAt': position.updatedAt
-            })
+
+        const command = new PutCommand({
+            TableName: POSITIONS_TABLE,
+            Item: {
+                ...body,
+                updatedAt: new Date().toISOString()
+            }
         });
-        
-        await client.send(command);
-        
-        return json(position);
+
+        const result = await docClient.send(command);
+        console.log('Put result:', result);
+        return new Response(JSON.stringify(command.input.Item), {
+            headers: { 'Content-Type': 'application/json' }
+        });
     } catch (error) {
-        console.error('Error:', error);
-        return json({ error: 'Internal server error' }, { status: 500 });
+        console.error('Error in PUT /api/positions:', error);
+        return new Response(JSON.stringify({ error: error.message }), {
+            status: 500,
+            headers: { 'Content-Type': 'application/json' }
+        });
     }
 }
 
 export async function DELETE({ url }) {
     try {
-        const positionId = url.searchParams.get('id');
-        
-        if (!positionId) {
-            return json({ error: 'Position ID is required' }, { status: 400 });
+        const id = url.searchParams.get('id');
+        console.log('DELETE /api/positions - ID:', id);
+        console.log('Using table:', POSITIONS_TABLE);
+
+        if (!id) {
+            return new Response(JSON.stringify({ error: 'Position ID is required' }), {
+                status: 400,
+                headers: { 'Content-Type': 'application/json' }
+            });
         }
-        
-        const command = new DeleteItemCommand({
-            TableName: TABLE_NAME,
-            Key: marshall({ id: positionId })
+
+        const command = new DeleteCommand({
+            TableName: POSITIONS_TABLE,
+            Key: { id }
         });
-        
-        await client.send(command);
-        
-        return json({ message: 'Position deleted successfully' });
+
+        const result = await docClient.send(command);
+        console.log('Delete result:', result);
+        return new Response(JSON.stringify({ success: true }), {
+            headers: { 'Content-Type': 'application/json' }
+        });
     } catch (error) {
-        console.error('Error:', error);
-        return json({ error: 'Internal server error' }, { status: 500 });
+        console.error('Error in DELETE /api/positions:', error);
+        return new Response(JSON.stringify({ error: error.message }), {
+            status: 500,
+            headers: { 'Content-Type': 'application/json' }
+        });
     }
 } 

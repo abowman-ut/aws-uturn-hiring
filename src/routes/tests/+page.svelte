@@ -4,6 +4,12 @@
     let pageTitle = $derived(title);
     let positionsTestResult = $state(null);
     let candidatesTestResult = $state(null);
+    let testDataResult = $state(null);
+    let isGeneratingData = $state(false);
+    let isCleaningData = $state(false);
+    let positions = $state([]);
+    let candidates = $state([]);
+    let isLoadingData = $state(false);
     
     $effect(() => {
         document.title = pageTitle;
@@ -127,6 +133,190 @@
             };
         }
     }
+
+    async function generateTestData() {
+        isGeneratingData = true;
+        testDataResult = null;
+        
+        try {
+            // Generate positions
+            const positions = [
+                {
+                    title: 'Senior Software Engineer',
+                    description: 'Looking for an experienced software engineer to join our team',
+                    requirements: '5+ years experience, React, Node.js, AWS',
+                    status: 'open'
+                },
+                {
+                    title: 'Product Manager',
+                    description: 'Seeking a product manager to drive our product development',
+                    requirements: '3+ years PM experience, Agile, User Research',
+                    status: 'open'
+                },
+                {
+                    title: 'UX Designer',
+                    description: 'Join our design team to create beautiful user experiences',
+                    requirements: '3+ years UX experience, Figma, User Testing',
+                    status: 'open'
+                }
+            ];
+
+            // Create positions
+            for (const position of positions) {
+                const response = await fetch('/api/positions', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(position)
+                });
+                
+                if (!response.ok) throw new Error('Failed to create position');
+                const createdPosition = await response.json();
+                
+                // Generate candidates for each position
+                const candidates = [
+                    {
+                        name: 'John Smith',
+                        email: 'john.smith@example.com',
+                        phone: '555-0101',
+                        resume: 'Experienced software engineer with 8 years of experience...',
+                        status: 'new',
+                        positionId: createdPosition.id
+                    },
+                    {
+                        name: 'Sarah Johnson',
+                        email: 'sarah.j@example.com',
+                        phone: '555-0102',
+                        resume: 'Product manager with 5 years of experience...',
+                        status: 'new',
+                        positionId: createdPosition.id
+                    },
+                    {
+                        name: 'Michael Chen',
+                        email: 'm.chen@example.com',
+                        phone: '555-0103',
+                        resume: 'UX designer with 4 years of experience...',
+                        status: 'new',
+                        positionId: createdPosition.id
+                    }
+                ];
+
+                // Create candidates
+                for (const candidate of candidates) {
+                    const response = await fetch('/api/candidates', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(candidate)
+                    });
+                    
+                    if (!response.ok) throw new Error('Failed to create candidate');
+                }
+            }
+
+            testDataResult = {
+                success: true,
+                message: 'Successfully generated test data: 3 positions and 9 candidates'
+            };
+
+            // Refresh the data view
+            await loadTestData();
+        } catch (error) {
+            testDataResult = {
+                success: false,
+                message: `Failed to generate test data: ${error.message}`
+            };
+        } finally {
+            isGeneratingData = false;
+        }
+    }
+
+    async function loadTestData() {
+        try {
+            // Load all positions
+            const positionsResponse = await fetch('/api/positions');
+            if (!positionsResponse.ok) throw new Error('Failed to load positions');
+            positions = await positionsResponse.json();
+            console.log('Loaded positions:', positions);
+
+            // Load all candidates
+            const candidatesResponse = await fetch('/api/candidates');
+            if (!candidatesResponse.ok) throw new Error('Failed to load candidates');
+            candidates = await candidatesResponse.json();
+            console.log('Loaded candidates:', candidates);
+        } catch (error) {
+            console.error('Error loading test data:', error);
+        }
+    }
+
+    // Load data when component mounts
+    $effect(() => {
+        console.log('Component mounted, loading data...');
+        loadTestData();
+    });
+
+    // Helper function to get candidates for a position
+    function getCandidatesForPosition(positionId) {
+        const filteredCandidates = candidates.filter(c => c.positionId === positionId);
+        console.log(`Candidates for position ${positionId}:`, filteredCandidates);
+        return filteredCandidates;
+    }
+
+    // Effect to monitor positions changes
+    $effect(() => {
+        $inspect(positions, 'Positions updated');
+    });
+
+    // Effect to monitor candidates changes
+    $effect(() => {
+        $inspect(candidates, 'Candidates updated');
+    });
+
+    async function cleanupTestData() {
+        isCleaningData = true;
+        testDataResult = null;
+        
+        try {
+            // First get all positions
+            const positionsResponse = await fetch('/api/positions');
+            if (!positionsResponse.ok) throw new Error('Failed to load positions');
+            const positions = await positionsResponse.json();
+            
+            // Delete all positions
+            for (const position of positions) {
+                const response = await fetch(`/api/positions?id=${position.id}`, {
+                    method: 'DELETE'
+                });
+                if (!response.ok) throw new Error(`Failed to delete position ${position.id}`);
+            }
+
+            // Then get all candidates
+            const candidatesResponse = await fetch('/api/candidates');
+            if (!candidatesResponse.ok) throw new Error('Failed to load candidates');
+            const candidates = await candidatesResponse.json();
+            
+            // Delete all candidates
+            for (const candidate of candidates) {
+                const response = await fetch(`/api/candidates?id=${candidate.id}`, {
+                    method: 'DELETE'
+                });
+                if (!response.ok) throw new Error(`Failed to delete candidate ${candidate.id}`);
+            }
+
+            testDataResult = {
+                success: true,
+                message: `Successfully cleaned up ${positions.length} positions and ${candidates.length} candidates`
+            };
+
+            // Refresh the data view
+            await loadTestData();
+        } catch (error) {
+            testDataResult = {
+                success: false,
+                message: `Failed to clean up test data: ${error.message}`
+            };
+        } finally {
+            isCleaningData = false;
+        }
+    }
 </script>
 
 <div class="page-container">
@@ -167,6 +357,86 @@
                     </div>
                 </div>
             {/if}
+        </div>
+
+        <!-- Test Data Section -->
+        <div class="test-section">
+            <div class="section-header">
+                <i class="bi bi-database-add text-primary"></i>
+                <h2>Test Data</h2>
+            </div>
+            <div class="api-test-group">
+                <p class="text-muted mb-3">Generate or clean up sample positions and candidates for testing</p>
+                <div class="test-controls">
+                    <button 
+                        class="btn btn-primary me-2" 
+                        onclick={generateTestData}
+                        disabled={isGeneratingData}
+                    >
+                        <i class="bi {isGeneratingData ? 'bi-hourglass-split' : 'bi-plus-circle-fill'}"></i>
+                        {isGeneratingData ? 'Generating...' : 'Generate Test Data'}
+                    </button>
+                    <button 
+                        class="btn btn-danger" 
+                        onclick={cleanupTestData}
+                        disabled={isCleaningData}
+                    >
+                        <i class="bi {isCleaningData ? 'bi-hourglass-split' : 'bi-trash-fill'}"></i>
+                        {isCleaningData ? 'Cleaning...' : 'Clean Up Test Data'}
+                    </button>
+                </div>
+                {#if testDataResult}
+                    <div class="test-result {testDataResult.success ? 'success' : 'error'}">
+                        <i class="bi {testDataResult.success ? 'bi-check-circle-fill' : 'bi-x-circle-fill'}"></i>
+                        <span>{testDataResult.message}</span>
+                    </div>
+                {/if}
+            </div>
+        </div>
+
+        <!-- Test Data View Section -->
+        <div class="test-section">
+            <div class="section-header">
+                <i class="bi bi-table text-primary"></i>
+                <h2>Test Data View</h2>
+            </div>
+            <div class="api-test-group">
+                {#if positions.length === 0}
+                    <div class="empty-state">
+                        <i class="bi bi-database-x"></i>
+                        <span>No test data available. Generate some data first!</span>
+                    </div>
+                {:else}
+                    <div class="data-view">
+                        {#each positions as position}
+                            <div class="position-card">
+                                <div class="position-header">
+                                    <h3>{position.title}</h3>
+                                    <span class="status-badge {position.status}">{position.status}</span>
+                                </div>
+                                <p class="description">{position.description}</p>
+                                <p class="requirements"><strong>Requirements:</strong> {position.requirements}</p>
+                                
+                                <div class="candidates-section">
+                                    <h4>Candidates ({getCandidatesForPosition(position.id).length})</h4>
+                                    {#each getCandidatesForPosition(position.id) as candidate}
+                                        <div class="candidate-card">
+                                            <div class="candidate-header">
+                                                <h5>{candidate.name}</h5>
+                                                <span class="status-badge {candidate.status}">{candidate.status}</span>
+                                            </div>
+                                            <div class="candidate-details">
+                                                <p><i class="bi bi-envelope"></i> {candidate.email}</p>
+                                                <p><i class="bi bi-telephone"></i> {candidate.phone}</p>
+                                            </div>
+                                        </div>
+                                    {/each}
+                                </div>
+                            </div>
+                        {/each}
+                    </div>
+                {/if}
+            </div>
         </div>
 
         <!-- API Tests Section -->
@@ -431,5 +701,160 @@
 
     :global(.btn-primary:hover) {
         background: #3651d4;
+    }
+
+    .btn:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+    }
+
+    .text-muted {
+        color: #64748b;
+        font-size: 0.9375rem;
+    }
+
+    .mb-3 {
+        margin-bottom: 1rem;
+    }
+
+    .empty-state {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 1rem;
+        color: #64748b;
+        font-size: 0.9375rem;
+    }
+
+    .data-view {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    .position-card {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 1.5rem;
+    }
+
+    .position-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .position-header h3 {
+        margin: 0;
+        color: #1e293b;
+        font-size: 1.25rem;
+    }
+
+    .description {
+        color: #64748b;
+        margin-bottom: 0.75rem;
+    }
+
+    .requirements {
+        color: #475569;
+        margin-bottom: 1rem;
+    }
+
+    .candidates-section {
+        border-top: 1px solid #e2e8f0;
+        padding-top: 1rem;
+    }
+
+    .candidates-section h4 {
+        color: #1e293b;
+        font-size: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .candidate-card {
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        padding: 1rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .candidate-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.5rem;
+    }
+
+    .candidate-header h5 {
+        margin: 0;
+        color: #1e293b;
+        font-size: 1rem;
+    }
+
+    .candidate-details {
+        display: flex;
+        gap: 1rem;
+        color: #64748b;
+        font-size: 0.875rem;
+    }
+
+    .candidate-details p {
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .status-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        text-transform: capitalize;
+    }
+
+    .status-badge.open {
+        background: #dcfce7;
+        color: #166534;
+    }
+
+    .status-badge.new {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+
+    @media (max-width: 767.98px) {
+        .position-card {
+            padding: 1rem;
+        }
+
+        .candidate-details {
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+    }
+
+    .me-2 {
+        margin-right: 0.5rem;
+    }
+
+    .btn-danger {
+        background-color: #dc2626;
+        border-color: #dc2626;
+        color: white;
+    }
+
+    .btn-danger:hover {
+        background-color: #b91c1c;
+        border-color: #b91c1c;
+    }
+
+    .btn-danger:disabled {
+        background-color: #ef4444;
+        border-color: #ef4444;
+        opacity: 0.7;
     }
 </style> 

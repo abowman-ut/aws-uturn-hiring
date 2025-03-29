@@ -1,141 +1,136 @@
-import { json } from '@sveltejs/kit';
-import { client } from '$lib/dynamodb';
-import { 
-    PutItemCommand, 
-    GetItemCommand, 
-    UpdateItemCommand, 
-    DeleteItemCommand,
-    QueryCommand
-} from '@aws-sdk/client-dynamodb';
-import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
-
-const TABLE_NAME = import.meta.env.DEV ? 'uturn-candidates-local' : 'uturn-candidates';
+import { client, docClient, CANDIDATES_TABLE } from '$lib/dynamodb';
+import { GetCommand, PutCommand, ScanCommand, DeleteCommand } from '@aws-sdk/lib-dynamodb';
 
 export async function GET({ url }) {
     try {
-        const candidateId = url.searchParams.get('id');
-        
-        if (candidateId) {
-            // Get single candidate
-            const command = new GetItemCommand({
-                TableName: TABLE_NAME,
-                Key: marshall({ id: candidateId })
+        const id = url.searchParams.get('id');
+        console.log('GET /api/candidates - ID:', id);
+        console.log('Using table:', CANDIDATES_TABLE);
+
+        if (id) {
+            const command = new GetCommand({
+                TableName: CANDIDATES_TABLE,
+                Key: { id }
             });
-            
-            const result = await client.send(command);
-            
-            if (!result.Item) {
-                return json({ error: 'Candidate not found' }, { status: 404 });
-            }
-            
-            return json(unmarshall(result.Item));
+
+            const result = await docClient.send(command);
+            console.log('Get result:', result);
+            return new Response(JSON.stringify(result.Item), {
+                headers: { 'Content-Type': 'application/json' }
+            });
         } else {
-            // List all candidates
-            const command = new QueryCommand({
-                TableName: TABLE_NAME
+            const command = new ScanCommand({
+                TableName: CANDIDATES_TABLE
             });
-            
-            const result = await client.send(command);
-            
-            return json({
-                candidates: result.Items.map(item => unmarshall(item))
+
+            const result = await docClient.send(command);
+            console.log('Scan result:', result);
+            return new Response(JSON.stringify(result.Items), {
+                headers: { 'Content-Type': 'application/json' }
             });
         }
     } catch (error) {
-        console.error('Error:', error);
-        return json({ error: 'Internal server error' }, { status: 500 });
+        console.error('Error in GET /api/candidates:', error);
+        return new Response(JSON.stringify({ error: error.message }), {
+            status: 500,
+            headers: { 'Content-Type': 'application/json' }
+        });
     }
 }
 
 export async function POST({ request }) {
     try {
-        const candidate = await request.json();
-        
-        // Generate a unique ID if not provided
-        if (!candidate.id) {
-            candidate.id = crypto.randomUUID();
-        }
-        
-        // Add timestamp
-        candidate.createdAt = new Date().toISOString();
-        candidate.updatedAt = candidate.createdAt;
-        
-        const command = new PutItemCommand({
-            TableName: TABLE_NAME,
-            Item: marshall(candidate)
+        const body = await request.json();
+        console.log('POST /api/candidates - Body:', body);
+        console.log('Using table:', CANDIDATES_TABLE);
+
+        const command = new PutCommand({
+            TableName: CANDIDATES_TABLE,
+            Item: {
+                id: crypto.randomUUID(),
+                ...body,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            }
         });
-        
-        await client.send(command);
-        
-        return json(candidate, { status: 201 });
+
+        const result = await docClient.send(command);
+        console.log('Put result:', result);
+        return new Response(JSON.stringify(command.input.Item), {
+            headers: { 'Content-Type': 'application/json' }
+        });
     } catch (error) {
-        console.error('Error:', error);
-        return json({ error: 'Internal server error' }, { status: 500 });
+        console.error('Error in POST /api/candidates:', error);
+        return new Response(JSON.stringify({ error: error.message }), {
+            status: 500,
+            headers: { 'Content-Type': 'application/json' }
+        });
     }
 }
 
 export async function PUT({ request }) {
     try {
-        const candidate = await request.json();
-        
-        if (!candidate.id) {
-            return json({ error: 'Candidate ID is required' }, { status: 400 });
+        const body = await request.json();
+        console.log('PUT /api/candidates - Body:', body);
+        console.log('Using table:', CANDIDATES_TABLE);
+
+        if (!body.id) {
+            return new Response(JSON.stringify({ error: 'Candidate ID is required' }), {
+                status: 400,
+                headers: { 'Content-Type': 'application/json' }
+            });
         }
-        
-        // Update timestamp
-        candidate.updatedAt = new Date().toISOString();
-        
-        const command = new UpdateItemCommand({
-            TableName: TABLE_NAME,
-            Key: marshall({ id: candidate.id }),
-            UpdateExpression: 'SET #name = :name, #email = :email, #phone = :phone, #resume = :resume, #status = :status, #positionId = :positionId, #updatedAt = :updatedAt',
-            ExpressionAttributeNames: {
-                '#name': 'name',
-                '#email': 'email',
-                '#phone': 'phone',
-                '#resume': 'resume',
-                '#status': 'status',
-                '#positionId': 'positionId',
-                '#updatedAt': 'updatedAt'
-            },
-            ExpressionAttributeValues: marshall({
-                ':name': candidate.name,
-                ':email': candidate.email,
-                ':phone': candidate.phone,
-                ':resume': candidate.resume,
-                ':status': candidate.status,
-                ':positionId': candidate.positionId,
-                ':updatedAt': candidate.updatedAt
-            })
+
+        const command = new PutCommand({
+            TableName: CANDIDATES_TABLE,
+            Item: {
+                ...body,
+                updatedAt: new Date().toISOString()
+            }
         });
-        
-        await client.send(command);
-        
-        return json(candidate);
+
+        const result = await docClient.send(command);
+        console.log('Put result:', result);
+        return new Response(JSON.stringify(command.input.Item), {
+            headers: { 'Content-Type': 'application/json' }
+        });
     } catch (error) {
-        console.error('Error:', error);
-        return json({ error: 'Internal server error' }, { status: 500 });
+        console.error('Error in PUT /api/candidates:', error);
+        return new Response(JSON.stringify({ error: error.message }), {
+            status: 500,
+            headers: { 'Content-Type': 'application/json' }
+        });
     }
 }
 
 export async function DELETE({ url }) {
     try {
-        const candidateId = url.searchParams.get('id');
-        
-        if (!candidateId) {
-            return json({ error: 'Candidate ID is required' }, { status: 400 });
+        const id = url.searchParams.get('id');
+        console.log('DELETE /api/candidates - ID:', id);
+        console.log('Using table:', CANDIDATES_TABLE);
+
+        if (!id) {
+            return new Response(JSON.stringify({ error: 'Candidate ID is required' }), {
+                status: 400,
+                headers: { 'Content-Type': 'application/json' }
+            });
         }
-        
-        const command = new DeleteItemCommand({
-            TableName: TABLE_NAME,
-            Key: marshall({ id: candidateId })
+
+        const command = new DeleteCommand({
+            TableName: CANDIDATES_TABLE,
+            Key: { id }
         });
-        
-        await client.send(command);
-        
-        return json({ message: 'Candidate deleted successfully' });
+
+        const result = await docClient.send(command);
+        console.log('Delete result:', result);
+        return new Response(JSON.stringify({ success: true }), {
+            headers: { 'Content-Type': 'application/json' }
+        });
     } catch (error) {
-        console.error('Error:', error);
-        return json({ error: 'Internal server error' }, { status: 500 });
+        console.error('Error in DELETE /api/candidates:', error);
+        return new Response(JSON.stringify({ error: error.message }), {
+            status: 500,
+            headers: { 'Content-Type': 'application/json' }
+        });
     }
 } 
