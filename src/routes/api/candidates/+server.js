@@ -1,6 +1,7 @@
 import { dynamoOperation, CANDIDATES_TABLE } from '$lib/dynamodb';
 import { GetCommand, PutCommand, ScanCommand, DeleteCommand } from '@aws-sdk/lib-dynamodb';
 import { json } from '@sveltejs/kit';
+import { getInitialStage } from '$lib/hiring-process';
 
 // Validate candidate data
 function validateCandidate(candidate) {
@@ -87,6 +88,9 @@ export async function POST({ request }) {
         // Add timestamps
         candidate.createdAt = new Date().toISOString();
         candidate.updatedAt = candidate.createdAt;
+
+        // Initialize stages array with the initial stage
+        candidate.stages = [getInitialStage()];
         
         await dynamoOperation(PutCommand, {
             tableName: CANDIDATES_TABLE,

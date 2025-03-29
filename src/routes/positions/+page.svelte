@@ -9,6 +9,7 @@
     let formSuccess = $state(null);
     let selectedDepartment = $state('');
     let selectedTimeline = $state('');
+    let currentStage = $state('cv_review');
 
     // Form data
     let newPosition = $state({
@@ -17,6 +18,12 @@
         hiringManager: '',
         timeline: ''
     });
+
+    const STAGES = [
+        { id: 'cv_review', name: 'CV Review', icon: 'bi-file-text' },
+        { id: 'culture_fit', name: 'Culture Fit', icon: 'bi-people' },
+        { id: 'interview', name: 'Interview', icon: 'bi-code-square' }
+    ];
 
     // Load data when component mounts
     $effect(() => {
@@ -226,6 +233,33 @@
                     </div>
                 {/each}
             {/if}
+        </div>
+
+        <!-- Stages -->
+        <div class="stages-container">
+            {#each STAGES as stage}
+                <div class="stage-card {stage.id === currentStage ? 'current' : ''} {stage.id === 'hired' || stage.id === 'rejected' ? 'final-stage' : ''}">
+                    <div class="stage-icon">
+                        <i class="bi {stage.icon}"></i>
+                    </div>
+                    <div class="stage-info">
+                        <h3>{stage.name}</h3>
+                        <p class="stage-description">
+                            {#if stage.id === 'cv_review'}
+                                Initial review of candidate's CV and qualifications
+                            {:else if stage.id === 'culture_fit'}
+                                Assessment of cultural alignment and soft skills
+                            {:else if stage.id === 'interview'}
+                                Technical and behavioral interview process
+                            {:else if stage.id === 'hired'}
+                                Candidate has been hired
+                            {:else if stage.id === 'rejected'}
+                                Candidate has been rejected
+                            {/if}
+                        </p>
+                    </div>
+                </div>
+            {/each}
         </div>
     </div>
 </div>
@@ -478,6 +512,65 @@
         .timeline-tag {
             width: 100%;
             justify-content: flex-start;
+        }
+    }
+
+    .stages-container {
+        display: flex;
+        gap: 1rem;
+        margin-top: 2rem;
+        padding: 1rem;
+        background: #f8fafc;
+        border-radius: 8px;
+    }
+
+    .stage-card {
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 1.5rem;
+        flex: 1;
+        transition: all 0.2s ease;
+    }
+
+    .stage-card.current {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 2px #bfdbfe;
+    }
+
+    .stage-card.final-stage {
+        background: #f8fafc;
+    }
+
+    .stage-icon {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 1rem;
+        font-size: 1.5rem;
+        color: #3b82f6;
+    }
+
+    .stage-info {
+        text-align: center;
+    }
+
+    .stage-info h3 {
+        margin: 0;
+        color: #1e293b;
+        font-size: 1.25rem;
+        font-weight: 600;
+    }
+
+    .stage-description {
+        color: #64748b;
+        font-size: 0.875rem;
+        margin: 0.5rem 0 0;
+        line-height: 1.5;
+    }
+
+    @media (max-width: 767.98px) {
+        .stages-container {
+            flex-direction: column;
         }
     }
 </style> 

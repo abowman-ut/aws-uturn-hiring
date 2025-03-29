@@ -1,5 +1,6 @@
 <script>
     import { base } from '$app/paths';
+    import HiringTimeline from '$lib/components/HiringTimeline.svelte';
     let title = $state('Candidates');
     let pageTitle = $derived(title);
     let candidates = $state([]);
@@ -15,7 +16,7 @@
     let newCandidate = $state({
         name: '',
         email: '',
-        status: 'new',
+        status: 'cv_review',
         positionId: '',
         expectedPayRange: {
             min: '',
@@ -25,6 +26,12 @@
         source: '',
         sourceName: ''
     });
+
+    const STAGES = [
+        { id: 'cv_review', name: 'CV Review', icon: 'bi-file-text' },
+        { id: 'culture_fit', name: 'Culture Fit', icon: 'bi-people' },
+        { id: 'interview', name: 'Interview', icon: 'bi-code-square' }
+    ];
 
     // Load data when component mounts
     $effect(() => {
@@ -127,7 +134,7 @@
         newCandidate = {
             name: '',
             email: '',
-            status: 'new',
+            status: 'cv_review',
             positionId: '',
             expectedPayRange: { min: '', max: '', currency: 'USD' },
             source: '',
@@ -288,6 +295,11 @@
                                 <i class="bi bi-person-badge"></i>
                                 <span>{formatSource(candidate.source, candidate.sourceName)}</span>
                             </div>
+                        </div>
+
+                        <!-- Add Hiring Timeline -->
+                        <div class="timeline-section">
+                            <HiringTimeline {candidate} />
                         </div>
                     </div>
                 {/each}
@@ -797,5 +809,11 @@
     .dropdown-menu,
     .dropdown-item {
         display: none;
+    }
+
+    .timeline-section {
+        margin-top: 1.5rem;
+        border-top: 1px solid #e2e8f0;
+        padding-top: 1.5rem;
     }
 </style> 

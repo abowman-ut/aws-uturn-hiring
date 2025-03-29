@@ -83,7 +83,7 @@
                 email: 'test@example.com',
                 phone: '123-456-7890',
                 resume: 'Test resume content',
-                status: 'new',
+                status: 'cv_review',
                 positionId: 'test-position-id'
             };
             
@@ -197,7 +197,7 @@
                         email: 'john.smith@example.com',
                         phone: '555-0101',
                         resume: 'Experienced software engineer with 8 years of experience...',
-                        status: 'new',
+                        status: 'cv_review',
                         positionId: createdPosition.id,
                         expectedPayRange: {
                             min: 120000,
@@ -212,7 +212,7 @@
                         email: 'sarah.j@example.com',
                         phone: '555-0102',
                         resume: 'Product manager with 5 years of experience...',
-                        status: 'new',
+                        status: 'cv_review',
                         positionId: createdPosition.id,
                         expectedPayRange: {
                             min: 130000,
@@ -227,7 +227,7 @@
                         email: 'm.chen@example.com',
                         phone: '555-0103',
                         resume: 'UX designer with 4 years of experience...',
-                        status: 'new',
+                        status: 'cv_review',
                         positionId: createdPosition.id,
                         expectedPayRange: {
                             min: 100000,
