@@ -1,125 +1,123 @@
-# sv
+# AWS U-Turn Hiring Platform
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+A modern hiring platform built with SvelteKit and AWS services, designed to streamline the recruitment process.
 
-## Creating a project
+## Features
 
-If you're seeing this, you've probably already done this step. Congrats!
+- **Position Management**
+  - Create, read, update, and delete job positions
+  - Track position status and requirements
+  - Environment-aware data storage
 
-```bash
-# create a new project in the current directory
-npx sv create
+- **Candidate Management**
+  - Track candidates for each position
+  - Store candidate details and application status
+  - Link candidates to specific positions
 
-# create a new project in my-app
-npx sv create my-app
+- **Testing Interface**
+  - Generate test data for development
+  - Clean up test data when needed
+  - Real-time data view with automatic updates
+
+## Tech Stack
+
+- **Frontend**: SvelteKit 2.0 with Svelte 5
+- **Backend**: AWS Lambda (via SvelteKit)
+- **Database**: AWS DynamoDB
+- **Deployment**: AWS Amplify
+
+## Prerequisites
+
+- Node.js 18 or higher
+- AWS account with appropriate permissions
+- AWS CLI configured with credentials
+
+## Environment Setup
+
+1. Create a `.env` file in the project root with the following variables:
+   ```
+   MY_AWS_ACCESS_KEY_ID=your_access_key
+   MY_AWS_SECRET_ACCESS_KEY=your_secret_key
+   ```
+
+2. Create DynamoDB tables:
+   - Development:
+     - `uturn-positions-local`
+     - `uturn-candidates-local`
+   - Production:
+     - `uturn-positions`
+     - `uturn-candidates`
+
+## Development
+
+1. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+2. Start the development server:
+   ```bash
+   npm run dev
+   ```
+
+3. Visit `http://localhost:5173` in your browser
+
+## Testing
+
+The project includes a testing interface at `/tests` that allows you to:
+- Generate test data for positions and candidates
+- View all test data in real-time
+- Clean up test data when needed
+- Test API endpoints
+
+## API Endpoints
+
+### Positions API
+- `GET /api/positions` - List all positions
+- `GET /api/positions?id=<id>` - Get a specific position
+- `POST /api/positions` - Create a new position
+- `PUT /api/positions` - Update a position
+- `DELETE /api/positions?id=<id>` - Delete a position
+
+### Candidates API
+- `GET /api/candidates` - List all candidates
+- `GET /api/candidates?id=<id>` - Get a specific candidate
+- `POST /api/candidates` - Create a new candidate
+- `PUT /api/candidates` - Update a candidate
+- `DELETE /api/candidates?id=<id>` - Delete a candidate
+
+## Project Structure
+
+```
+src/
+├── lib/
+│   └── dynamodb.js      # DynamoDB configuration and operations
+├── routes/
+│   ├── api/
+│   │   ├── positions/   # Positions API endpoints
+│   │   └── candidates/  # Candidates API endpoints
+│   └── tests/          # Testing interface
+└── app.html            # Main HTML template
 ```
 
-## Developing
+## Best Practices
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+This project follows several best practices for maintainability and reliability:
 
-```bash
-npm run dev
+- **API Design**: Consistent response formats and error handling
+- **State Management**: Svelte 5's reactive state management
+- **Error Handling**: Comprehensive error catching and reporting
+- **Testing**: Built-in test data generation and cleanup
+- **Security**: Environment-aware configuration and secure credential handling
 
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
-```
+## Contributing
 
-## Building
+1. Fork the repository
+2. Create a feature branch
+3. Commit your changes
+4. Push to the branch
+5. Create a Pull Request
 
-To create a production version of your app:
+## License
 
-```bash
-npm run build
-```
-
-You can preview the production build with `npm run preview`.
-
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
-
-
-
-## AWS Setup
-
-To install the adapter, open a terminal window and run the following command. This example uses the community adapter available at github.com/gzimbron/amplify-adapter. If you are using a different community adapter, replace amplify-adapter with the name of your adapter.
-
-npm install amplify-adapter
-In the project folder for your SvelteKit app, open the svelte.config.js file. Edit the file to use the amplify-adapter or replace 'amplify-adapter' with the name of your adapter. The file should look like the following.
-
-import adapter from 'amplify-adapter';
-import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
-
-              
-/** @type {import('@sveltejs/kit').Config} */
-const config = {
-        // Consult https://kit.svelte.dev/docs/integrations#preprocessors
-        // for more information about preprocessors
-        preprocess: vitePreprocess(),
-
-        kit: {
-                // adapter-auto only supports some environments, see https://kit.svelte.dev/docs/adapter-auto for a list.
-                // If your environment is not supported, or you settled on a specific environment, switch out the adapter.
-                // See https://kit.svelte.dev/docs/adapters for more information about adapters.
-                adapter: adapter()
-        }
-};
-
-export default config;
-
-
-
-Commit the change and push the application to your Git repository.
-
-Now you are ready to deploy your SvelteKit app to Amplify.
-
-Sign in to the AWS Management Console and open the Amplify console.
-
-On the All apps page, choose Create new app.
-
-On the Start building with Amplify page, choose your Git repository provider, then choose Next.
-
-On the Add repository branch page, do the following:
-
-Select the name of the repository to connect.
-
-Select the name of the repository branch to connect.
-
-Choose Next.
-
-On the App settings page, locate the Build settings section. For Build output directory enter build.
-
-You must also update the app's frontend build commands in the build specification. To open the build specification, choose Edit YML file.
-
-In the amplify.yml file, locate the frontend build commands section. 
-
-Enter - cd build/compute/default/ and - npm i --production.
-
-Your build settings file should look like the following.
-
-version: 1
-frontend:
-    phases:
-        preBuild:
-            commands:
-                - 'npm ci --cache .npm --prefer-offline'
-        build:
-            commands:
-                - 'npm run build'
-                - 'cd build/compute/default/'
-                - 'npm i --production'
-              
-    artifacts:
-        baseDirectory: build
-        files:
-            - '**/*'
-    cache:
-        paths:
-            - '.npm/**/*'
-            
-Choose Save.
-
-If you want Amplify to be able to deliver app logs to Amazon CloudWatch Logs, you must explicitly enable this in the console. Open the Advanced settings section, then choose Enable SSR app logs in the Server-Side Rendering (SSR) deployment section.
-
-Choose Next.
-
-On the Review page, choose Save and deploy.
+This project is licensed under the MIT License - see the LICENSE file for details.
