@@ -180,7 +180,14 @@
                         phone: '555-0101',
                         resume: 'Experienced software engineer with 8 years of experience...',
                         status: 'new',
-                        positionId: createdPosition.id
+                        positionId: createdPosition.id,
+                        expectedPayRange: {
+                            min: 120000,
+                            max: 150000,
+                            currency: 'USD'
+                        },
+                        source: 'recruiter',
+                        sourceName: 'TechRecruiters Inc.'
                     },
                     {
                         name: 'Sarah Johnson',
@@ -188,7 +195,14 @@
                         phone: '555-0102',
                         resume: 'Product manager with 5 years of experience...',
                         status: 'new',
-                        positionId: createdPosition.id
+                        positionId: createdPosition.id,
+                        expectedPayRange: {
+                            min: 130000,
+                            max: 160000,
+                            currency: 'USD'
+                        },
+                        source: 'referral',
+                        sourceName: 'Michael Chen'
                     },
                     {
                         name: 'Michael Chen',
@@ -196,7 +210,14 @@
                         phone: '555-0103',
                         resume: 'UX designer with 4 years of experience...',
                         status: 'new',
-                        positionId: createdPosition.id
+                        positionId: createdPosition.id,
+                        expectedPayRange: {
+                            min: 100000,
+                            max: 130000,
+                            currency: 'USD'
+                        },
+                        source: 'recruiter',
+                        sourceName: 'DesignRecruiters LLC'
                     }
                 ];
 

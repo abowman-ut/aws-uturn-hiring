@@ -20,6 +20,22 @@ export async function load() {
         // Try to list tables to verify connection
         const response = await client.send(new ListTablesCommand({}));
         
+        // Check if our required tables exist
+        const requiredTables = import.meta.env.DEV 
+            ? ['uturn-positions-local', 'uturn-candidates-local']
+            : ['uturn-positions', 'uturn-candidates'];
+        
+        const missingTables = requiredTables.filter(table => !response.TableNames.includes(table));
+        
+        if (missingTables.length > 0) {
+            return {
+                dbStatus: {
+                    status: 'error',
+                    message: `Missing required tables: ${missingTables.join(', ')}. Please create these tables in DynamoDB.`
+                }
+            };
+        }
+        
         return {
             dbStatus: {
                 status: 'success',

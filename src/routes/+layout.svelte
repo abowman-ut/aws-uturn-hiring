@@ -7,9 +7,26 @@
 </script>
 
 <NavBar />
-<div class="container-fluid px-5 my-5">
+<main class="main-content">
 	{@render children()}
-</div>
+</main>
 
 <style>
+	:global(body) {
+		background-color: #f8fafc !important;
+		color: #334155;
+	}
+
+	.main-content {
+		min-height: calc(100vh - 56px);
+		padding: 1.5rem;
+		max-width: 1200px;
+		margin: 0 auto;
+	}
+
+	@media (max-width: 767.98px) {
+		.main-content {
+			padding: 1rem;
+		}
+	}
 </style>

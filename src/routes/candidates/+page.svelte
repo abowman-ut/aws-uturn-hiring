@@ -268,6 +268,7 @@
                                     class="btn-delete" 
                                     onclick={() => deleteCandidate(candidate.id)}
                                     title="Delete candidate"
+                                    aria-label="Delete candidate"
                                 >
                                     <i class="bi bi-trash"></i>
                                 </button>

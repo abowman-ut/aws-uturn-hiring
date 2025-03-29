@@ -31,5 +31,20 @@ export async function dynamoOperation(operation, params) {
     }
 }
 
+// Helper functions for common operations
+export async function putItem(tableName, item) {
+    return dynamoOperation(PutCommand, {
+        tableName,
+        Item: item
+    });
+}
+
+export async function getItem(tableName, key) {
+    return dynamoOperation(GetCommand, {
+        tableName,
+        Key: key
+    });
+}
+
 // Export the clients and table names for use in service layers
 export { client, docClient, POSITIONS_TABLE, CANDIDATES_TABLE }; 

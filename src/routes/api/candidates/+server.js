@@ -2,6 +2,41 @@ import { dynamoOperation, CANDIDATES_TABLE } from '$lib/dynamodb';
 import { GetCommand, PutCommand, ScanCommand, DeleteCommand } from '@aws-sdk/lib-dynamodb';
 import { json } from '@sveltejs/kit';
 
+// Validate candidate data
+function validateCandidate(candidate) {
+    const errors = [];
+    
+    // Required fields
+    if (!candidate.name) errors.push('Name is required');
+    if (!candidate.email) errors.push('Email is required');
+    if (!candidate.positionId) errors.push('Position ID is required');
+    if (!candidate.expectedPayRange) errors.push('Expected pay range is required');
+    if (!candidate.source) errors.push('Source is required');
+    if (!candidate.sourceName) errors.push('Source name is required');
+    
+    // Validate email format
+    if (candidate.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(candidate.email)) {
+        errors.push('Invalid email format');
+    }
+    
+    // Validate pay range
+    if (candidate.expectedPayRange) {
+        const { min, max, currency } = candidate.expectedPayRange;
+        if (!min || !max || !currency) {
+            errors.push('Pay range must include min, max, and currency');
+        } else if (min > max) {
+            errors.push('Minimum pay cannot be greater than maximum pay');
+        }
+    }
+    
+    // Validate source
+    if (candidate.source && !['recruiter', 'referral'].includes(candidate.source)) {
+        errors.push('Source must be either "recruiter" or "referral"');
+    }
+    
+    return errors;
+}
+
 // GET /api/candidates
 export async function GET({ url }) {
     try {
@@ -38,6 +73,12 @@ export async function POST({ request }) {
     try {
         const candidate = await request.json();
         
+        // Validate candidate data
+        const errors = validateCandidate(candidate);
+        if (errors.length > 0) {
+            return json({ error: 'Validation failed', details: errors }, { status: 400 });
+        }
+        
         // Generate ID if not provided
         if (!candidate.id) {
             candidate.id = crypto.randomUUID();
@@ -66,6 +107,12 @@ export async function PUT({ request }) {
         
         if (!candidate.id) {
             return json({ error: 'Candidate ID is required' }, { status: 400 });
+        }
+        
+        // Validate candidate data
+        const errors = validateCandidate(candidate);
+        if (errors.length > 0) {
+            return json({ error: 'Validation failed', details: errors }, { status: 400 });
         }
         
         // Update timestamp
