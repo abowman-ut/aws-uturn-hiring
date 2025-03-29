@@ -1,136 +1,105 @@
-import { client, docClient, CANDIDATES_TABLE } from '$lib/dynamodb';
+import { dynamoOperation, CANDIDATES_TABLE } from '$lib/dynamodb';
 import { GetCommand, PutCommand, ScanCommand, DeleteCommand } from '@aws-sdk/lib-dynamodb';
+import { json } from '@sveltejs/kit';
 
+// GET /api/candidates
 export async function GET({ url }) {
     try {
         const id = url.searchParams.get('id');
-        console.log('GET /api/candidates - ID:', id);
-        console.log('Using table:', CANDIDATES_TABLE);
-
+        
         if (id) {
-            const command = new GetCommand({
-                TableName: CANDIDATES_TABLE,
+            // Get single candidate
+            const result = await dynamoOperation(GetCommand, {
+                tableName: CANDIDATES_TABLE,
                 Key: { id }
             });
-
-            const result = await docClient.send(command);
-            console.log('Get result:', result);
-            return new Response(JSON.stringify(result.Item), {
-                headers: { 'Content-Type': 'application/json' }
-            });
+            
+            if (!result.Item) {
+                return json({ error: 'Candidate not found' }, { status: 404 });
+            }
+            
+            return json(result.Item);
         } else {
-            const command = new ScanCommand({
-                TableName: CANDIDATES_TABLE
+            // List all candidates
+            const result = await dynamoOperation(ScanCommand, {
+                tableName: CANDIDATES_TABLE
             });
-
-            const result = await docClient.send(command);
-            console.log('Scan result:', result);
-            return new Response(JSON.stringify(result.Items), {
-                headers: { 'Content-Type': 'application/json' }
-            });
+            
+            return json(result.Items || []);
         }
     } catch (error) {
-        console.error('Error in GET /api/candidates:', error);
-        return new Response(JSON.stringify({ error: error.message }), {
-            status: 500,
-            headers: { 'Content-Type': 'application/json' }
-        });
+        console.error('Error in candidates GET:', error);
+        return json({ error: 'Failed to fetch candidates' }, { status: 500 });
     }
 }
 
+// POST /api/candidates
 export async function POST({ request }) {
     try {
-        const body = await request.json();
-        console.log('POST /api/candidates - Body:', body);
-        console.log('Using table:', CANDIDATES_TABLE);
-
-        const command = new PutCommand({
-            TableName: CANDIDATES_TABLE,
-            Item: {
-                id: crypto.randomUUID(),
-                ...body,
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString()
-            }
+        const candidate = await request.json();
+        
+        // Generate ID if not provided
+        if (!candidate.id) {
+            candidate.id = crypto.randomUUID();
+        }
+        
+        // Add timestamps
+        candidate.createdAt = new Date().toISOString();
+        candidate.updatedAt = candidate.createdAt;
+        
+        await dynamoOperation(PutCommand, {
+            tableName: CANDIDATES_TABLE,
+            Item: candidate
         });
-
-        const result = await docClient.send(command);
-        console.log('Put result:', result);
-        return new Response(JSON.stringify(command.input.Item), {
-            headers: { 'Content-Type': 'application/json' }
-        });
+        
+        return json(candidate);
     } catch (error) {
-        console.error('Error in POST /api/candidates:', error);
-        return new Response(JSON.stringify({ error: error.message }), {
-            status: 500,
-            headers: { 'Content-Type': 'application/json' }
-        });
+        console.error('Error in candidates POST:', error);
+        return json({ error: 'Failed to create candidate' }, { status: 500 });
     }
 }
 
+// PUT /api/candidates
 export async function PUT({ request }) {
     try {
-        const body = await request.json();
-        console.log('PUT /api/candidates - Body:', body);
-        console.log('Using table:', CANDIDATES_TABLE);
-
-        if (!body.id) {
-            return new Response(JSON.stringify({ error: 'Candidate ID is required' }), {
-                status: 400,
-                headers: { 'Content-Type': 'application/json' }
-            });
+        const candidate = await request.json();
+        
+        if (!candidate.id) {
+            return json({ error: 'Candidate ID is required' }, { status: 400 });
         }
-
-        const command = new PutCommand({
-            TableName: CANDIDATES_TABLE,
-            Item: {
-                ...body,
-                updatedAt: new Date().toISOString()
-            }
+        
+        // Update timestamp
+        candidate.updatedAt = new Date().toISOString();
+        
+        await dynamoOperation(PutCommand, {
+            tableName: CANDIDATES_TABLE,
+            Item: candidate
         });
-
-        const result = await docClient.send(command);
-        console.log('Put result:', result);
-        return new Response(JSON.stringify(command.input.Item), {
-            headers: { 'Content-Type': 'application/json' }
-        });
+        
+        return json(candidate);
     } catch (error) {
-        console.error('Error in PUT /api/candidates:', error);
-        return new Response(JSON.stringify({ error: error.message }), {
-            status: 500,
-            headers: { 'Content-Type': 'application/json' }
-        });
+        console.error('Error in candidates PUT:', error);
+        return json({ error: 'Failed to update candidate' }, { status: 500 });
     }
 }
 
+// DELETE /api/candidates
 export async function DELETE({ url }) {
     try {
         const id = url.searchParams.get('id');
-        console.log('DELETE /api/candidates - ID:', id);
-        console.log('Using table:', CANDIDATES_TABLE);
-
+        
         if (!id) {
-            return new Response(JSON.stringify({ error: 'Candidate ID is required' }), {
-                status: 400,
-                headers: { 'Content-Type': 'application/json' }
-            });
+            return json({ error: 'Candidate ID is required' }, { status: 400 });
         }
-
-        const command = new DeleteCommand({
-            TableName: CANDIDATES_TABLE,
+        
+        await dynamoOperation(DeleteCommand, {
+            tableName: CANDIDATES_TABLE,
             Key: { id }
         });
-
-        const result = await docClient.send(command);
-        console.log('Delete result:', result);
-        return new Response(JSON.stringify({ success: true }), {
-            headers: { 'Content-Type': 'application/json' }
-        });
+        
+        return json({ success: true });
     } catch (error) {
-        console.error('Error in DELETE /api/candidates:', error);
-        return new Response(JSON.stringify({ error: error.message }), {
-            status: 500,
-            headers: { 'Content-Type': 'application/json' }
-        });
+        console.error('Error in candidates DELETE:', error);
+        return json({ error: 'Failed to delete candidate' }, { status: 500 });
     }
 } 

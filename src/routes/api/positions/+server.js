@@ -1,149 +1,105 @@
-import { client, docClient, POSITIONS_TABLE } from '$lib/dynamodb';
+import { dynamoOperation, POSITIONS_TABLE } from '$lib/dynamodb';
 import { GetCommand, PutCommand, ScanCommand, DeleteCommand } from '@aws-sdk/lib-dynamodb';
+import { json } from '@sveltejs/kit';
 
+// GET /api/positions
 export async function GET({ url }) {
     try {
         const id = url.searchParams.get('id');
-        console.log('GET /api/positions - ID:', id);
-        console.log('Using table:', POSITIONS_TABLE);
-        console.log('Environment:', import.meta.env.DEV ? 'development' : 'production');
-
+        
         if (id) {
-            const command = new GetCommand({
-                TableName: POSITIONS_TABLE,
+            // Get single position
+            const result = await dynamoOperation(GetCommand, {
+                tableName: POSITIONS_TABLE,
                 Key: { id }
             });
-
-            const result = await docClient.send(command);
-            console.log('Get result:', result);
-            return new Response(JSON.stringify(result.Item), {
-                headers: { 'Content-Type': 'application/json' }
-            });
+            
+            if (!result.Item) {
+                return json({ error: 'Position not found' }, { status: 404 });
+            }
+            
+            return json(result.Item);
         } else {
-            const command = new ScanCommand({
-                TableName: POSITIONS_TABLE
+            // List all positions
+            const result = await dynamoOperation(ScanCommand, {
+                tableName: POSITIONS_TABLE
             });
-
-            const result = await docClient.send(command);
-            console.log('Scan result:', result);
-            return new Response(JSON.stringify(result.Items), {
-                headers: { 'Content-Type': 'application/json' }
-            });
+            
+            return json(result.Items || []);
         }
     } catch (error) {
-        console.error('Error in GET /api/positions:', error);
-        console.error('Error details:', {
-            name: error.name,
-            message: error.message,
-            code: error.code,
-            stack: error.stack
-        });
-        return new Response(JSON.stringify({ 
-            error: error.message,
-            details: {
-                name: error.name,
-                code: error.code
-            }
-        }), {
-            status: 500,
-            headers: { 'Content-Type': 'application/json' }
-        });
+        console.error('Error in positions GET:', error);
+        return json({ error: 'Failed to fetch positions' }, { status: 500 });
     }
 }
 
+// POST /api/positions
 export async function POST({ request }) {
     try {
-        const body = await request.json();
-        console.log('POST /api/positions - Body:', body);
-        console.log('Using table:', POSITIONS_TABLE);
-
-        const command = new PutCommand({
-            TableName: POSITIONS_TABLE,
-            Item: {
-                id: crypto.randomUUID(),
-                ...body,
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString()
-            }
+        const position = await request.json();
+        
+        // Generate ID if not provided
+        if (!position.id) {
+            position.id = crypto.randomUUID();
+        }
+        
+        // Add timestamps
+        position.createdAt = new Date().toISOString();
+        position.updatedAt = position.createdAt;
+        
+        await dynamoOperation(PutCommand, {
+            tableName: POSITIONS_TABLE,
+            Item: position
         });
-
-        const result = await docClient.send(command);
-        console.log('Put result:', result);
-        return new Response(JSON.stringify(command.input.Item), {
-            headers: { 'Content-Type': 'application/json' }
-        });
+        
+        return json(position);
     } catch (error) {
-        console.error('Error in POST /api/positions:', error);
-        return new Response(JSON.stringify({ error: error.message }), {
-            status: 500,
-            headers: { 'Content-Type': 'application/json' }
-        });
+        console.error('Error in positions POST:', error);
+        return json({ error: 'Failed to create position' }, { status: 500 });
     }
 }
 
+// PUT /api/positions
 export async function PUT({ request }) {
     try {
-        const body = await request.json();
-        console.log('PUT /api/positions - Body:', body);
-        console.log('Using table:', POSITIONS_TABLE);
-
-        if (!body.id) {
-            return new Response(JSON.stringify({ error: 'Position ID is required' }), {
-                status: 400,
-                headers: { 'Content-Type': 'application/json' }
-            });
+        const position = await request.json();
+        
+        if (!position.id) {
+            return json({ error: 'Position ID is required' }, { status: 400 });
         }
-
-        const command = new PutCommand({
-            TableName: POSITIONS_TABLE,
-            Item: {
-                ...body,
-                updatedAt: new Date().toISOString()
-            }
+        
+        // Update timestamp
+        position.updatedAt = new Date().toISOString();
+        
+        await dynamoOperation(PutCommand, {
+            tableName: POSITIONS_TABLE,
+            Item: position
         });
-
-        const result = await docClient.send(command);
-        console.log('Put result:', result);
-        return new Response(JSON.stringify(command.input.Item), {
-            headers: { 'Content-Type': 'application/json' }
-        });
+        
+        return json(position);
     } catch (error) {
-        console.error('Error in PUT /api/positions:', error);
-        return new Response(JSON.stringify({ error: error.message }), {
-            status: 500,
-            headers: { 'Content-Type': 'application/json' }
-        });
+        console.error('Error in positions PUT:', error);
+        return json({ error: 'Failed to update position' }, { status: 500 });
     }
 }
 
+// DELETE /api/positions
 export async function DELETE({ url }) {
     try {
         const id = url.searchParams.get('id');
-        console.log('DELETE /api/positions - ID:', id);
-        console.log('Using table:', POSITIONS_TABLE);
-
+        
         if (!id) {
-            return new Response(JSON.stringify({ error: 'Position ID is required' }), {
-                status: 400,
-                headers: { 'Content-Type': 'application/json' }
-            });
+            return json({ error: 'Position ID is required' }, { status: 400 });
         }
-
-        const command = new DeleteCommand({
-            TableName: POSITIONS_TABLE,
+        
+        await dynamoOperation(DeleteCommand, {
+            tableName: POSITIONS_TABLE,
             Key: { id }
         });
-
-        const result = await docClient.send(command);
-        console.log('Delete result:', result);
-        return new Response(JSON.stringify({ success: true }), {
-            headers: { 'Content-Type': 'application/json' }
-        });
+        
+        return json({ success: true });
     } catch (error) {
-        console.error('Error in DELETE /api/positions:', error);
-        return new Response(JSON.stringify({ error: error.message }), {
-            status: 500,
-            headers: { 'Content-Type': 'application/json' }
-        });
+        console.error('Error in positions DELETE:', error);
+        return json({ error: 'Failed to delete position' }, { status: 500 });
     }
 } 
