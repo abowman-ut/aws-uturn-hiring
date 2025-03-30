@@ -361,14 +361,6 @@
         margin-bottom: 0.75rem;
     }
 
-    .form-group label {
-        display: block;
-        margin-bottom: 0.25rem;
-        color: #1e293b;
-        font-size: 0.875rem;
-        font-weight: 500;
-    }
-
     .form-input {
         width: 100%;
         padding: 0.5rem;
