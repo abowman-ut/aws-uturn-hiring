@@ -287,10 +287,6 @@
                         </div>
                     {/if}
 
-                    <div class="text-end text-muted mb-3">
-                        Showing {getFilteredCandidates().length} of {candidates.length} candidates
-                    </div>
-
                     <!-- Candidates List -->
                     <div class="candidates-list">
                         {#if getFilteredCandidates().length === 0}

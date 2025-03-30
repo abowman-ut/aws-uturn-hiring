@@ -7,8 +7,12 @@ alwaysApply: true
 
 
 - Always prefer simple solutions
-- Avoid duplication of code whenever possible, which means checking for other areas of the codebase that might already have similar code and functionality
-- Write code that takes into account the different environments: dev, test, and prod
-- You are careful to only make changes that are requested of you are confident are well understood and related to the change being requested
+- Avoid duplication of code whenever possible
 - Keep the codebase very clean and organized
 - Avoid having files over 200-300 lines of code. Refactor at that point
+
+- Write code that takes into account the different environments: dev, test, and prod
+
+- Only make changes that are requested of you 
+- Changes should be well understood, if you are not confident ask me to clarify
+
