@@ -88,9 +88,7 @@
             }
 
             candidate = await updateResponse.json();
-            updateSuccess = isDecisionStage(stageId)
-                ? (outcome === OUTCOMES.HIRE ? 'Candidate hired successfully!' : 'Candidate rejected.')
-                : (outcome === OUTCOMES.PASS ? 'Moved to next stage successfully!' : 'Stage updated successfully!');
+            updateSuccess = null;
 
             decisionMaker = '';
             notes = '';
@@ -129,24 +127,14 @@
                     {#if stage.status === 'current'}
                         <form onsubmit={(e) => { e.preventDefault(); updateStage(stage.id, isDecisionStage(stage.id) ? OUTCOMES.HIRE : OUTCOMES.PASS); }}>
                             <div class="form-group">
-                                <label for="decisionMaker">Decision Maker *</label>
                                 <input 
                                     type="text" 
                                     id="decisionMaker"
                                     bind:value={decisionMaker}
-                                    placeholder="Enter decision maker's name"
+                                    placeholder="Decision maker"
                                     required
                                     class="form-input"
                                 />
-                            </div>
-                            <div class="form-group">
-                                <label for="notes">Notes</label>
-                                <textarea 
-                                    id="notes"
-                                    bind:value={notes}
-                                    placeholder="Add any notes about the decision"
-                                    class="form-textarea"
-                                ></textarea>
                             </div>
                             <div class="stage-actions">
                                 <button 
@@ -175,11 +163,12 @@
                                     <i class="bi bi-person"></i>
                                     {stage.decisionMaker}
                                 </span>
-                            {/if}
-                            {#if stage.startDate}
-                                <span class="duration">
+                                <span class="date-time">
                                     <i class="bi bi-clock"></i>
-                                    {getStageDuration(stage.id)}
+                                    {new Date(stage.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                                    {#if getStageDuration(stage.id) !== ''}
+                                        ({getStageDuration(stage.id)})
+                                    {/if}
                                 </span>
                             {/if}
                         </div>
@@ -401,9 +390,14 @@
             padding: 0.5rem;
         }
 
+        .timeline {
+            flex-direction: column;
+            gap: 1rem;
+        }
+
         .timeline-stage {
-            min-width: 180px;
-            max-width: 250px;
+            min-width: 100%;
+            max-width: 100%;
         }
 
         .stage-connector {
@@ -416,11 +410,12 @@
         }
 
         .stage-actions {
-            flex-direction: column;
+            flex-direction: row;
+            justify-content: space-between;
         }
 
         .btn {
-            width: 100%;
+            flex: 1;
             justify-content: center;
         }
     }
