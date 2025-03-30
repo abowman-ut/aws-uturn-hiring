@@ -229,39 +229,43 @@
                                 <p class="mt-2">No positions found</p>
                             </div>
                         {:else}
-                            {#each getFilteredPositions() as position}
-                                <div class="card mb-3">
-                                    <div class="card-body">
-                                        <div class="d-flex justify-content-between align-items-start mb-3">
-                                            <div>
-                                                <h5 class="card-title mb-1">{position.title}</h5>
-                                                <span class="badge bg-primary">
-                                                    {position.department}
-                                                </span>
+                            <div class="row g-3">
+                                {#each getFilteredPositions() as position}
+                                    <div class="col-12 col-md-6 col-xl-4">
+                                        <div class="card h-100">
+                                            <div class="card-body">
+                                                <div class="d-flex justify-content-between align-items-start mb-3">
+                                                    <div>
+                                                        <h5 class="card-title mb-1">{position.title}</h5>
+                                                        <span class="badge bg-primary">
+                                                            {position.department}
+                                                        </span>
+                                                    </div>
+                                                    <div class="d-flex align-items-center gap-3">
+                                                        <span class="text-muted">
+                                                            <i class="bi bi-calendar me-1"></i>
+                                                            {position.timeline}
+                                                        </span>
+                                                        <button 
+                                                            class="btn btn-outline-danger btn-sm"
+                                                            onclick={() => deletePosition(position.id)}
+                                                            title="Delete position"
+                                                            aria-label="Delete {position.title} position"
+                                                        >
+                                                            <i class="bi bi-trash"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div class="d-flex align-items-center text-muted">
+                                                    <i class="bi bi-person me-2"></i>
+                                                    <span>{position.hiringManager}</span>
+                                                </div>
                                             </div>
-                                            <div class="d-flex align-items-center gap-3">
-                                                <span class="text-muted">
-                                                    <i class="bi bi-calendar me-1"></i>
-                                                    {position.timeline}
-                                                </span>
-                                                <button 
-                                                    class="btn btn-outline-danger btn-sm"
-                                                    onclick={() => deletePosition(position.id)}
-                                                    title="Delete position"
-                                                    aria-label="Delete {position.title} position"
-                                                >
-                                                    <i class="bi bi-trash"></i>
-                                                </button>
-                                            </div>
-                                        </div>
-                                        
-                                        <div class="d-flex align-items-center text-muted">
-                                            <i class="bi bi-person me-2"></i>
-                                            <span>{position.hiringManager}</span>
                                         </div>
                                     </div>
-                                </div>
-                            {/each}
+                                {/each}
+                            </div>
                         {/if}
                     </div>
                 </div>
