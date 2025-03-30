@@ -11,6 +11,7 @@
     let isSubmitting = $state(false);
     let formError = $state(null);
     let showTimelines = $state({});  // Store visibility state for each candidate
+    let isLoading = $state(true);  // Add loading state
 
     // Form data
     let newCandidate = $state({
@@ -39,11 +40,12 @@
     });
 
     // Initialize timeline visibility when candidates load
-    $effect(() => {
-        showTimelines = candidates.reduce((acc, c) => ({ ...acc, [c.id]: false }), {});
-    });
+    // $effect(() => {
+    //     showTimelines = candidates.reduce((acc, c) => ({ ...acc, [c.id]: false }), {});
+    // });
 
     async function loadData() {
+        isLoading = true;
         try {
             const [positionsRes, candidatesRes] = await Promise.all([
                 fetch('/api/positions'),
@@ -62,6 +64,8 @@
             );
         } catch (error) {
             console.error('Error loading data:', error);
+        } finally {
+            isLoading = false;
         }
     }
 
@@ -369,7 +373,27 @@
                 <div class="card-body">
                     <!-- Candidates List -->
                     <div class="candidates-list">
-                        {#if candidates.length === 0}
+                        {#if isLoading}
+                            {#each Array(3) as _, i}
+                                <div class="card mb-3" in:fade>
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-start mb-3">
+                                            <div style="width: 60%;">
+                                                <div class="skeleton-line" style="width: 40%; height: 24px;"></div>
+                                                <div class="mt-2">
+                                                    <div class="skeleton-line" style="width: 70%; height: 16px;"></div>
+                                                    <div class="skeleton-line mt-2" style="width: 50%; height: 16px;"></div>
+                                                </div>
+                                            </div>
+                                            <div style="width: 35%;">
+                                                <div class="skeleton-line" style="width: 100%; height: 16px;"></div>
+                                                <div class="skeleton-line mt-3" style="width: 100%; height: 20px;"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {/each}
+                        {:else if candidates.length === 0}
                             <div class="text-center text-muted py-5">
                                 <i class="bi bi-people display-4"></i>
                                 <p class="mt-2">No candidates found</p>
@@ -440,5 +464,19 @@
 </div>
 
 <style>
+    .skeleton-line {
+        background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+        background-size: 200% 100%;
+        animation: loading 1.5s infinite;
+        border-radius: 4px;
+    }
 
+    @keyframes loading {
+        0% {
+            background-position: 200% 0;
+        }
+        100% {
+            background-position: -200% 0;
+        }
+    }
 </style> 
