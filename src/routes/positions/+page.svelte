@@ -1,6 +1,8 @@
 <script>
     import { base } from '$app/paths';
     import { slide } from 'svelte/transition';
+    import { onMount } from 'svelte';
+
     let title = $state('Positions');
     let pageTitle = $derived(title);
     let positions = $state([]);
@@ -8,9 +10,7 @@
     let isSubmitting = $state(false);
     let formError = $state(null);
     let formSuccess = $state(null);
-    let selectedDepartment = $state('');
-    let selectedTimeline = $state('');
-    let showFilters = $state(true);
+    let window = $state({ innerWidth: 0 });
 
     // Form data
     let newPosition = $state({
@@ -28,6 +28,17 @@
         loadData();
     });
 
+    onMount(() => {
+        window.innerWidth = globalThis.window.innerWidth;
+        const handleResize = () => {
+            window.innerWidth = globalThis.window.innerWidth;
+        };
+        globalThis.window.addEventListener('resize', handleResize);
+        return () => {
+            globalThis.window.removeEventListener('resize', handleResize);
+        };
+    });
+
     async function loadData() {
         try {
             const response = await fetch('/api/positions');
@@ -40,10 +51,7 @@
 
     // Helper function to get filtered positions
     function getFilteredPositions() {
-        return positions.filter(position => 
-            (!selectedDepartment || position.department === selectedDepartment) &&
-            (!selectedTimeline || position.timeline === selectedTimeline)
-        );
+        return positions;
     }
 
     async function handleSubmit(e) {
@@ -109,143 +117,142 @@
 </script>
 
 <div class="container-fluid py-3">
-    <div class="row g-3">
-        <!-- Sidebar with entry form -->
-        <div class="col-12 col-lg-3">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title mb-3">Add New Position</h5>
-                    <form onsubmit={(e) => { e.preventDefault(); handleSubmit(e); }}>
-                        <div class="mb-3">
-                            <input 
-                                type="text" 
-                                class="form-control"
-                                bind:value={newPosition.title}
-                                placeholder="Position Title"
-                                required
-                            />
-                        </div>
-
-                        <div class="mb-3">
-                            <select class="form-select" bind:value={newPosition.department} required>
-                                <option value="">Department</option>
-                                {#each DEPARTMENTS as department}
-                                    <option value={department}>{department}</option>
-                                {/each}
-                            </select>
-                        </div>
-
-                        <div class="mb-3">
-                            <input 
-                                type="text" 
-                                class="form-control"
-                                bind:value={newPosition.hiringManager}
-                                placeholder="Hiring Manager"
-                                required
-                            />
-                        </div>
-
-                        <div class="mb-3">
-                            <select class="form-select" bind:value={newPosition.timeline} required>
-                                <option value="">Timeline</option>
-                                {#each TIMELINES as timeline}
-                                    <option value={timeline}>{timeline}</option>
-                                {/each}
-                            </select>
-                        </div>
-
-                        <div class="d-flex gap-2">
-                            <button type="button" class="btn btn-secondary" onclick={resetForm}>
-                                Cancel
-                            </button>
-                            <button type="submit" class="btn btn-primary" disabled={isSubmitting}>
-                                {isSubmitting ? 'Adding...' : 'Add'}
-                            </button>
-                        </div>
-
-                        {#if formError}
-                            <div class="alert alert-danger mt-3">
-                                <i class="bi bi-exclamation-circle-fill me-2"></i>
-                                {formError}
-                            </div>
-                        {/if}
-
-                        {#if formSuccess}
-                            <div class="alert alert-success mt-3">
-                                <i class="bi bi-check-circle-fill me-2"></i>
-                                {formSuccess}
-                            </div>
-                        {/if}
-                    </form>
-                </div>
+    <div class="row">
+        <!-- Add Position Button (visible on mobile) -->
+        <div class="col-12 d-lg-none mb-3">
+            <div class="d-flex justify-content-end">
+                <button 
+                    type="button" 
+                    class="btn btn-primary d-inline-flex align-items-center" 
+                    onclick={() => showAddForm = !showAddForm}
+                    disabled={showAddForm}
+                >
+                    <i class="bi bi-{showAddForm ? 'dash' : 'plus'}-circle me-2"></i>
+                    Add Position
+                </button>
             </div>
         </div>
+
+        <!-- Sidebar with entry form -->
+        {#if showAddForm || window.innerWidth >= 992}
+            <div class="col-12 col-lg-4 col-xl-3" transition:slide={{ duration: 300 }}>
+                <div class="card">
+                    <div class="card-body">
+                        <form onsubmit={(e) => { e.preventDefault(); handleSubmit(e); }}>
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    <input 
+                                        type="text" 
+                                        class="form-control"
+                                        id="positionTitle"
+                                        bind:value={newPosition.title}
+                                        placeholder="Position Title"
+                                        required
+                                    />
+                                </div>
+
+                                <div class="col-12">
+                                    <div class="select-wrapper">
+                                        <i class="bi bi-building select-icon"></i>
+                                        <select class="form-select ps-4" id="department" bind:value={newPosition.department} required>
+                                            <option value="">&nbsp; Select department</option>
+                                            {#each DEPARTMENTS as department}
+                                                <option value={department}>{department}</option>
+                                            {/each}
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="col-12">
+                                    <input 
+                                        type="text" 
+                                        class="form-control"
+                                        id="hiringManager"
+                                        bind:value={newPosition.hiringManager}
+                                        placeholder="Hiring Manager"
+                                        required
+                                    />
+                                </div>
+
+                                <div class="col-12">
+                                    <div class="select-wrapper">
+                                        <i class="bi bi-calendar select-icon"></i>
+                                        <select class="form-select ps-4" id="timeline" bind:value={newPosition.timeline} required>
+                                            <option value="">&nbsp; Select timeline</option>
+                                            {#each TIMELINES as timeline}
+                                                <option value={timeline}>{timeline}</option>
+                                            {/each}
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="col-12">
+                                    <div class="d-flex justify-content-end gap-2">
+                                        <button type="button" class="btn btn-secondary" style="width: 100px;" onclick={resetForm}>
+                                            Cancel
+                                        </button>
+                                        <button type="submit" class="btn btn-primary" style="width: 100px;" disabled={isSubmitting}>
+                                            {isSubmitting ? 'Adding...' : 'Add'}
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {#if formError}
+                                    <div class="col-12">
+                                        <div class="alert alert-danger">
+                                            <i class="bi bi-exclamation-circle-fill me-2"></i>
+                                            {formError}
+                                        </div>
+                                    </div>
+                                {/if}
+
+                                {#if formSuccess}
+                                    <div class="col-12">
+                                        <div class="alert alert-success">
+                                            <i class="bi bi-check-circle-fill me-2"></i>
+                                            {formSuccess}
+                                        </div>
+                                    </div>
+                                {/if}
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        {/if}
 
         <!-- Main Content -->
         <div class="col">
             <div class="card">
                 <div class="card-body">
-                    <!-- Filters Toggle -->
-                    <button 
-                        type="button" 
-                        class="btn btn-link d-flex align-items-center w-100 text-start text-decoration-none mb-3" 
-                        onclick={() => showFilters = !showFilters}
-                    >
-                        <i class="bi bi-filter-circle-fill me-2"></i>
-                        <span class="me-auto">Filters</span>
-                        <small class="text-muted">Showing {getFilteredPositions().length} of {positions.length} positions &nbsp; </small>
-                        <i class="bi bi-chevron-{showFilters ? 'up' : 'down'}"></i>
-                    </button>
-
-                    <!-- Filters Section with Transition -->
-                    {#if showFilters}
-                        <div class="mb-4" transition:slide={{ duration: 200 }}>
-                            <div class="row g-3">
-                                <div class="col-12 col-md-6">
-                                    <select class="form-select" bind:value={selectedDepartment}>
-                                        <option value="">All Departments</option>
-                                        {#each DEPARTMENTS as department}
-                                            <option value={department}>{department}</option>
-                                        {/each}
-                                    </select>
-                                </div>
-                                <div class="col-12 col-md-6">
-                                    <select class="form-select" bind:value={selectedTimeline}>
-                                        <option value="">All Timelines</option>
-                                        {#each TIMELINES as timeline}
-                                            <option value={timeline}>{timeline}</option>
-                                        {/each}
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-                    {/if}
-
                     <!-- Positions List -->
                     <div class="positions-list">
-                        {#if getFilteredPositions().length === 0}
+                        {#if positions.length === 0}
                             <div class="text-center text-muted py-5">
                                 <i class="bi bi-briefcase display-4"></i>
                                 <p class="mt-2">No positions found</p>
                             </div>
                         {:else}
                             <div class="row g-3">
-                                {#each getFilteredPositions() as position}
+                                {#each positions as position}
                                     <div class="col-12 col-md-6 col-xl-4">
                                         <div class="card h-100">
                                             <div class="card-body">
                                                 <div class="d-flex justify-content-between align-items-start mb-3">
                                                     <div>
-                                                        <h5 class="card-title mb-1">{position.title}</h5>
+                                                        <h5 class="card-title mb-1 text-body-emphasis">{position.title}</h5>
                                                         <span class="badge bg-primary">
                                                             {position.department}
                                                         </span>
                                                     </div>
-                                                    <div class="d-flex align-items-center gap-3">
-                                                        <span class="text-muted">
-                                                            <i class="bi bi-calendar me-1"></i>
+                                                    <div class="d-flex align-items-center gap-2">
+                                                        <button 
+                                                            class="btn btn-info btn-sm"
+                                                            title="Timeline"
+                                                            disabled
+                                                        >
                                                             {position.timeline}
-                                                        </span>
+                                                        </button>
                                                         <button 
                                                             class="btn btn-outline-danger btn-sm"
                                                             onclick={() => deletePosition(position.id)}
@@ -257,7 +264,7 @@
                                                     </div>
                                                 </div>
                                                 
-                                                <div class="d-flex align-items-center text-muted">
+                                                <div class="d-flex align-items-center text-muted small">
                                                     <i class="bi bi-person me-2"></i>
                                                     <span>{position.hiringManager}</span>
                                                 </div>
@@ -275,5 +282,22 @@
 </div>
 
 <style>
+    /* Select with icon styles */
+    .select-wrapper {
+        position: relative;
+    }
 
+    .select-icon {
+        position: absolute;
+        left: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 1;
+        color: #6c757d;
+        pointer-events: none;
+    }
+
+    .select-wrapper select {
+        padding-left: 35px;
+    }
 </style> 

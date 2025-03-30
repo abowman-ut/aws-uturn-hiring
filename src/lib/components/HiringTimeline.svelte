@@ -1,15 +1,22 @@
 <script>
     import { STAGES, OUTCOMES, getNextStage, isLastStage, getStageClass, isDecisionStage } from '$lib/hiring-process';
+    import { fade, slide } from 'svelte/transition';
+    import { crossfade } from 'svelte/transition';
     
     let { candidate, onUpdate } = $props();
     let stages = $state([]);
-    let showNotes = $state(false);
+    let openNoteStages = $state(new Set());
     let selectedStage = $state(null);
     let isUpdating = $state(false);
     let updateError = $state(null);
     let updateSuccess = $state(null);
     let decisionMaker = $state('');
     let notes = $state('');
+
+    const [send, receive] = crossfade({
+        duration: 400,
+        fallback: fade
+    });
 
     // Load stages when component mounts
     $effect(() => {
@@ -62,6 +69,15 @@
         return `${days} day${days !== 1 ? 's' : ''}`;
     }
 
+    function toggleNotes(stageId) {
+        if (openNoteStages.has(stageId)) {
+            openNoteStages.delete(stageId);
+        } else {
+            openNoteStages.add(stageId);
+        }
+        openNoteStages = new Set(openNoteStages);
+    }
+
     async function updateStage(stageId, outcome) {
         isUpdating = true;
         updateError = null;
@@ -92,6 +108,7 @@
             candidate = updatedCandidate;
             updateSuccess = null;
 
+            // Reset form values but maintain notes visibility
             decisionMaker = '';
             notes = '';
         } catch (error) {
@@ -119,98 +136,107 @@
     {/if}
 
     <div class="timeline">
-        {#each candidate.stages as stage}
-            <div class="timeline-stage {getStageClass(stage)}">
+        {#each candidate.stages as stage (stage.id)}
+            <div 
+                class="timeline-stage {getStageClass(stage)}"
+                in:receive={{key: stage.id}}
+                out:send={{key: stage.id}}
+            >
                 <div class="stage-icon">
                     <i class="bi {stage.icon}"></i>
                 </div>
                 <div class="stage-content">
                     {#if stage.status === 'current'}
-                        <h3>{stage.name}</h3>
-                        <form onsubmit={(e) => { e.preventDefault(); updateStage(stage.id, isDecisionStage(stage.id) ? OUTCOMES.HIRE : OUTCOMES.PASS); }}>
-                            <div class="form-group">
-                                <div class="input-with-icon">
-                                    <input 
-                                        type="text" 
-                                        id="decisionMaker"
-                                        bind:value={decisionMaker}
-                                        placeholder="Decision maker"
-                                        required
-                                        class="form-input"
-                                    />
+                        <div in:fade>
+                            <h3>{stage.name}</h3>
+                            <form onsubmit={(e) => { e.preventDefault(); updateStage(stage.id, isDecisionStage(stage.id) ? OUTCOMES.HIRE : OUTCOMES.PASS); }}>
+                                <div class="form-group">
+                                    <div class="input-with-icon">
+                                        <input 
+                                            type="text" 
+                                            id="decisionMaker"
+                                            bind:value={decisionMaker}
+                                            placeholder="Decision maker"
+                                            required
+                                            class="form-input"
+                                        />
+                                        <button 
+                                            type="button" 
+                                            class="icon-button" 
+                                            onclick={() => toggleNotes(stage.id)}
+                                            title="Toggle notes"
+                                            aria-label="Toggle notes"
+                                        >
+                                            <i class="bi bi-journal-text"></i>
+                                        </button>
+                                    </div>
+                                    {#if openNoteStages.has(stage.id)}
+                                        <textarea
+                                            bind:value={notes}
+                                            placeholder="Add notes..."
+                                            class="form-textarea mt-2"
+                                            transition:slide={{duration: 200}}
+                                        ></textarea>
+                                    {/if}
+                                </div>
+                                <div class="stage-actions">
+                                    <div class="button-container">
+                                        <button 
+                                            type="submit" 
+                                            class="btn btn-success"
+                                            disabled={isUpdating || !decisionMaker}
+                                        >
+                                            <i class="bi bi-check-circle"></i>
+                                            {isDecisionStage(stage.id) ? 'Hire' : 'Pass'}
+                                        </button>
+                                        <button 
+                                            type="button" 
+                                            class="btn btn-danger"
+                                            onclick={() => updateStage(stage.id, OUTCOMES.REJECT)}
+                                            disabled={isUpdating || !decisionMaker}
+                                        >
+                                            <i class="bi bi-x-circle"></i>
+                                            Reject
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    {:else}
+                        <div in:fade>
+                            <div class="stage-header">
+                                <h3>{stage.name}</h3>
+                                {#if stage.notes}
                                     <button 
                                         type="button" 
                                         class="icon-button" 
-                                        onclick={() => showNotes = !showNotes}
+                                        onclick={() => toggleNotes(stage.id)}
                                         title="Toggle notes"
                                         aria-label="Toggle notes"
                                     >
                                         <i class="bi bi-journal-text"></i>
                                     </button>
-                                </div>
-                                {#if showNotes}
-                                    <textarea
-                                        bind:value={notes}
-                                        placeholder="Add notes..."
-                                        class="form-textarea mt-2"
-                                    ></textarea>
                                 {/if}
                             </div>
-                            <div class="stage-actions">
-                                <div class="button-container">
-                                    <button 
-                                        type="submit" 
-                                        class="btn btn-success"
-                                        disabled={isUpdating || !decisionMaker}
-                                    >
-                                        <i class="bi bi-check-circle"></i>
-                                        {isDecisionStage(stage.id) ? 'Hire' : 'Pass'}
-                                    </button>
-                                    <button 
-                                        type="button" 
-                                        class="btn btn-danger"
-                                        onclick={() => updateStage(stage.id, OUTCOMES.REJECT)}
-                                        disabled={isUpdating || !decisionMaker}
-                                    >
-                                        <i class="bi bi-x-circle"></i>
-                                        Reject
-                                    </button>
-                                </div>
+                            <div class="stage-meta">
+                                {#if stage.decisionMaker}
+                                    <span class="decision-maker">
+                                        <i class="bi bi-person"></i>
+                                        {stage.decisionMaker}
+                                    </span>
+                                    <span class="date-time">
+                                        <i class="bi bi-clock"></i>
+                                        {new Date(stage.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                                        {#if getStageDuration(stage.id) !== ''}
+                                            ({getStageDuration(stage.id)})
+                                        {/if}
+                                    </span>
+                                {/if}
                             </div>
-                        </form>
-                    {:else}
-                        <div class="stage-header">
-                            <h3>{stage.name}</h3>
-                            {#if stage.notes}
-                                <button 
-                                    type="button" 
-                                    class="icon-button" 
-                                    onclick={() => selectedStage = selectedStage === stage.id ? null : stage.id}
-                                    title="Toggle notes"
-                                    aria-label="Toggle notes"
-                                >
-                                    <i class="bi bi-journal-text"></i>
-                                </button>
+                            {#if stage.notes && openNoteStages.has(stage.id)}
+                                <p class="notes" transition:slide={{duration: 200}}>{stage.notes}</p>
                             {/if}
                         </div>
-                        <div class="stage-meta">
-                            {#if stage.decisionMaker}
-                                <span class="decision-maker">
-                                    <i class="bi bi-person"></i>
-                                    {stage.decisionMaker}
-                                </span>
-                                <span class="date-time">
-                                    <i class="bi bi-clock"></i>
-                                    {new Date(stage.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                                    {#if getStageDuration(stage.id) !== ''}
-                                        ({getStageDuration(stage.id)})
-                                    {/if}
-                                </span>
-                            {/if}
-                        </div>
-                        {#if stage.notes && selectedStage === stage.id}
-                            <p class="notes">{stage.notes}</p>
-                        {/if}
                     {/if}
                 </div>
             </div>
