@@ -1,6 +1,7 @@
 <script>
     import { base } from '$app/paths';
     import HiringTimeline from '$lib/components/HiringTimeline.svelte';
+    import StageProgress from '$lib/components/StageProgress.svelte';
     import { slide } from 'svelte/transition';
     let title = $state('Candidates');
     let pageTitle = $derived(title);
@@ -134,6 +135,12 @@
             sourceName: ''
         };
         showAddForm = false;
+    }
+
+    function updateCandidate(updatedCandidate) {
+        candidates = candidates.map(c => 
+            c.id === updatedCandidate.id ? updatedCandidate : c
+        );
     }
 </script>
 
@@ -368,9 +375,7 @@
                                         <div class="d-flex justify-content-between align-items-start mb-3">
                                             <div>
                                                 <h5 class="card-title mb-1">{candidate.name}</h5>
-                                                <span class="badge bg-{candidate.status === 'cv_review' ? 'primary' : candidate.status === 'culture_fit' ? 'warning' : 'success'} text-capitalize">
-                                                    {candidate.status}
-                                                </span>
+                                                <StageProgress candidate={candidate} />
                                             </div>
                                             <div class="d-flex align-items-center gap-3">
                                                 <span class="text-muted">
@@ -410,7 +415,10 @@
                                         </div>
 
                                         <div class="border-top pt-3">
-                                            <HiringTimeline {candidate} />
+                                            <HiringTimeline 
+                                                candidate={candidate} 
+                                                onUpdate={updateCandidate}
+                                            />
                                         </div>
                                     </div>
                                 </div>

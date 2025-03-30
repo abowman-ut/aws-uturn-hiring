@@ -1,7 +1,7 @@
 <script>
     import { STAGES, OUTCOMES, getNextStage, isLastStage, getStageClass, isDecisionStage } from '$lib/hiring-process';
     
-    let { candidate } = $props();
+    let { candidate, onUpdate } = $props();
     let stages = $state([]);
     let showNotes = $state(false);
     let selectedStage = $state(null);
@@ -87,7 +87,9 @@
                 throw new Error(error.error || 'Failed to update stage');
             }
 
-            candidate = await updateResponse.json();
+            const updatedCandidate = await updateResponse.json();
+            onUpdate(updatedCandidate);
+            candidate = updatedCandidate;
             updateSuccess = null;
 
             decisionMaker = '';
