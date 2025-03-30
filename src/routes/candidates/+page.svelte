@@ -10,6 +10,7 @@
     let showAddForm = $state(false);
     let isSubmitting = $state(false);
     let formError = $state(null);
+    let showTimelines = $state({});  // Store visibility state for each candidate
 
     // Form data
     let newCandidate = $state({
@@ -35,6 +36,11 @@
     // Load data when component mounts
     $effect(() => {
         loadData();
+    });
+
+    // Initialize timeline visibility when candidates load
+    $effect(() => {
+        showTimelines = candidates.reduce((acc, c) => ({ ...acc, [c.id]: false }), {});
     });
 
     async function loadData() {
@@ -374,52 +380,54 @@
                                     <div class="card-body">
                                         <div class="d-flex justify-content-between align-items-start mb-3">
                                             <div>
-                                                <h5 class="card-title mb-1">{candidate.name}</h5>
-                                                <StageProgress candidate={candidate} />
-                                            </div>
-                                            <div class="d-flex align-items-center gap-3">
-                                                <span class="text-muted">
-                                                    <i class="bi bi-briefcase me-1"></i>
-                                                    {getPositionTitle(candidate.positionId)}
-                                                </span>
-                                                <button 
-                                                    class="btn btn-outline-danger btn-sm"
-                                                    onclick={() => deleteCandidate(candidate.id)}
-                                                    title="Delete candidate"
-                                                    aria-label="Delete {candidate.name}"
-                                                >
-                                                    <i class="bi bi-trash"></i>
-                                                </button>
-                                            </div>
-                                        </div>
-                                        
-                                        <div class="row g-3 mb-3">
-                                            <div class="col-12 col-md-4">
-                                                <div class="d-flex align-items-center text-muted">
-                                                    <i class="bi bi-envelope me-2"></i>
-                                                    <span>{candidate.email}</span>
+                                                <h5 class="card-title mb-0">{candidate.name}</h5>
+                                                <div class="mt-1">
+                                                    <div class="d-flex align-items-center text-muted">
+                                                        <i class="bi bi-envelope me-2"></i>
+                                                        <span>{candidate.email}</span>
+                                                    </div>
+                                                    <div class="d-flex align-items-center text-muted mt-1">
+                                                        <i class="bi bi-person-badge me-2"></i>
+                                                        <span>{formatSource(candidate.source, candidate.sourceName)}</span>
+                                                    </div>
                                                 </div>
                                             </div>
-                                            <div class="col-12 col-md-4">
-                                                <div class="d-flex align-items-center text-muted">
-                                                    <i class="bi bi-cash me-2"></i>
-                                                    <span>{formatPayRange(candidate.expectedPayRange)}</span>
+                                            <div>
+                                                <div class="d-flex align-items-center gap-3">
+                                                    <span class="text-muted">
+                                                        <i class="bi bi-briefcase me-1"></i>
+                                                        {getPositionTitle(candidate.positionId)}
+                                                    </span>
+                                                    <button 
+                                                        class="btn btn-outline-danger btn-sm"
+                                                        onclick={() => deleteCandidate(candidate.id)}
+                                                        title="Delete candidate"
+                                                        aria-label="Delete {candidate.name}"
+                                                    >
+                                                        <i class="bi bi-trash"></i>
+                                                    </button>
                                                 </div>
-                                            </div>
-                                            <div class="col-12 col-md-4">
-                                                <div class="d-flex align-items-center text-muted">
-                                                    <i class="bi bi-person-badge me-2"></i>
-                                                    <span>{formatSource(candidate.source, candidate.sourceName)}</span>
+                                                <div class="d-flex align-items-center justify-content-end gap-3 mt-2">
+                                                    <StageProgress candidate={candidate} />
+                                                    <button 
+                                                        class="btn btn-link p-0 text-muted fw-bold"
+                                                        onclick={() => showTimelines[candidate.id] = !showTimelines[candidate.id]}
+                                                        aria-label="Toggle timeline"
+                                                    >
+                                                        <i class="bi bi-chevron-{showTimelines[candidate.id] ? 'up' : 'down'} fw-bold"></i>
+                                                    </button>
                                                 </div>
                                             </div>
                                         </div>
 
-                                        <div class="border-top pt-3">
-                                            <HiringTimeline 
-                                                candidate={candidate} 
-                                                onUpdate={updateCandidate}
-                                            />
-                                        </div>
+                                        {#if showTimelines[candidate.id]}
+                                            <div class="border-top pt-3 mt-3" transition:slide={{ duration: 300 }}>
+                                                <HiringTimeline 
+                                                    candidate={candidate} 
+                                                    onUpdate={updateCandidate}
+                                                />
+                                            </div>
+                                        {/if}
                                     </div>
                                 </div>
                             {/each}
