@@ -9,10 +9,6 @@
     let showAddForm = $state(false);
     let isSubmitting = $state(false);
     let formError = $state(null);
-    let formSuccess = $state(null);
-    let selectedPosition = $state('');
-    let selectedSource = $state('');
-    let showFilters = $state(true);
 
     // Form data
     let newCandidate = $state({
@@ -51,7 +47,12 @@
             if (!candidatesRes.ok) throw new Error('Failed to load candidates');
 
             positions = await positionsRes.json();
-            candidates = await candidatesRes.json();
+            const loadedCandidates = await candidatesRes.json();
+            
+            // Sort candidates by createdAt in descending order (newest first)
+            candidates = loadedCandidates.sort((a, b) => 
+                new Date(b.createdAt) - new Date(a.createdAt)
+            );
         } catch (error) {
             console.error('Error loading data:', error);
         }
@@ -72,14 +73,6 @@
         return source && sourceName ? `${source.charAt(0).toUpperCase() + source.slice(1)}: ${sourceName}` : 'Not specified';
     }
 
-    // Helper function to get filtered candidates
-    function getFilteredCandidates() {
-        return candidates.filter(candidate => 
-            (!selectedPosition || candidate.positionId === selectedPosition) &&
-            (!selectedSource || candidate.source === selectedSource)
-        );
-    }
-
     async function handleSubmit(e) {
         e.preventDefault();
         isSubmitting = true;
@@ -97,8 +90,7 @@
                 throw new Error(error.error || 'Failed to create candidate');
             }
 
-            candidates = [...candidates, await response.json()];
-            formSuccess = 'Candidate added successfully!';
+            candidates = [await response.json(), ...candidates];
             showAddForm = false;
             resetForm();
         } catch (error) {
@@ -125,7 +117,6 @@
             }
 
             candidates = candidates.filter(c => c.id !== id);
-            formSuccess = 'Candidate deleted successfully!';
         } catch (error) {
             console.error('Error deleting candidate:', error);
             formError = error.message;
@@ -142,160 +133,236 @@
             source: '',
             sourceName: ''
         };
+        showAddForm = false;
     }
 </script>
 
 <div class="container-fluid py-3">
-    <div class="row g-3">
-        <!-- Sidebar with entry form -->
-        <div class="col-12 col-lg-3">
+    <div class="row">
+        <!-- Sidebar (visible on lg screens) -->
+        <div class="d-none d-lg-block col-lg-4 col-xl-3">
             <div class="card">
                 <div class="card-body">
-                    <h5 class="card-title mb-3">Add New Candidate</h5>
                     <form onsubmit={(e) => { e.preventDefault(); handleSubmit(e); }}>
-                        <div class="mb-3">
-                            <select class="form-select" bind:value={newCandidate.positionId} required>
-                                <option value="">Position</option>
-                                {#each positions as position}
-                                    <option value={position.id}>{position.title}</option>
-                                {/each}
-                            </select>
-                        </div>
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <select class="form-select" bind:value={newCandidate.positionId} required>
+                                    <option value="">Position</option>
+                                    {#each positions as position}
+                                        <option value={position.id}>{position.title}</option>
+                                    {/each}
+                                </select>
+                            </div>
 
-                        <div class="mb-3">
-                            <input 
-                                type="text" 
-                                class="form-control"
-                                bind:value={newCandidate.name}
-                                placeholder="Name"
-                                required
-                            />
-                        </div>
-
-                        <div class="mb-3">
-                            <input 
-                                type="email" 
-                                class="form-control"
-                                bind:value={newCandidate.email}
-                                placeholder="Email"
-                                required
-                            />
-                        </div>
-
-                        <div class="mb-3">
-                            <select class="form-select" bind:value={newCandidate.source} required>
-                                <option value="">Source</option>
-                                <option value="recruiter">Recruiter</option>
-                                <option value="referral">Referral</option>
-                            </select>
-                        </div>
-
-                        <div class="mb-3">
-                            <input 
-                                type="text" 
-                                class="form-control"
-                                bind:value={newCandidate.sourceName}
-                                placeholder="Source Contact"
-                                required
-                            />
-                        </div>
-
-                        <div class="mb-3">
-                            <div class="input-group">
+                            <div class="col-12">
                                 <input 
-                                    type="number" 
+                                    type="text" 
                                     class="form-control"
-                                    bind:value={newCandidate.expectedPayRange.min}
-                                    placeholder="Min ($)"
-                                    required
-                                />
-                                <span class="input-group-text">to</span>
-                                <input 
-                                    type="number" 
-                                    class="form-control"
-                                    bind:value={newCandidate.expectedPayRange.max}
-                                    placeholder="Max ($)"
+                                    bind:value={newCandidate.name}
+                                    placeholder="Name"
                                     required
                                 />
                             </div>
-                        </div>
 
-                        <div class="d-flex gap-2">
-                            <button type="button" class="btn btn-secondary" onclick={resetForm}>
-                                Cancel
-                            </button>
-                            <button type="submit" class="btn btn-primary" disabled={isSubmitting}>
-                                {isSubmitting ? 'Adding...' : 'Add'}
-                            </button>
-                        </div>
-
-                        {#if formError}
-                            <div class="alert alert-danger mt-3">
-                                <i class="bi bi-exclamation-circle-fill me-2"></i>
-                                {formError}
+                            <div class="col-12">
+                                <input 
+                                    type="email" 
+                                    class="form-control"
+                                    bind:value={newCandidate.email}
+                                    placeholder="Email"
+                                    required
+                                />
                             </div>
-                        {/if}
 
-                        {#if formSuccess}
-                            <div class="alert alert-success mt-3">
-                                <i class="bi bi-check-circle-fill me-2"></i>
-                                {formSuccess}
+                            <div class="col-12">
+                                <select class="form-select" bind:value={newCandidate.source} required>
+                                    <option value="">Source</option>
+                                    <option value="recruiter">Recruiter</option>
+                                    <option value="referral">Referral</option>
+                                </select>
                             </div>
-                        {/if}
+
+                            <div class="col-12">
+                                <input 
+                                    type="text" 
+                                    class="form-control"
+                                    bind:value={newCandidate.sourceName}
+                                    placeholder="Source Contact"
+                                    required
+                                />
+                            </div>
+
+                            <div class="col-12">
+                                <div class="input-group">
+                                    <input 
+                                        type="number" 
+                                        class="form-control"
+                                        bind:value={newCandidate.expectedPayRange.min}
+                                        placeholder="Min ($)"
+                                        required
+                                    />
+                                    <span class="input-group-text">to</span>
+                                    <input 
+                                        type="number" 
+                                        class="form-control"
+                                        bind:value={newCandidate.expectedPayRange.max}
+                                        placeholder="Max ($)"
+                                        required
+                                    />
+                                </div>
+                            </div>
+
+                            <div class="col-12">
+                                <div class="d-flex justify-content-end gap-2">
+                                    <button type="button" class="btn btn-secondary" style="width: 100px;" onclick={resetForm}>
+                                        Cancel
+                                    </button>
+                                    <button type="submit" class="btn btn-primary" style="width: 100px;" disabled={isSubmitting}>
+                                        {isSubmitting ? 'Adding...' : 'Add'}
+                                    </button>
+                                </div>
+                            </div>
+
+                            {#if formError}
+                                <div class="col-12">
+                                    <div class="alert alert-danger">
+                                        <i class="bi bi-exclamation-circle-fill me-2"></i>
+                                        {formError}
+                                    </div>
+                                </div>
+                            {/if}
+                        </div>
                     </form>
                 </div>
             </div>
         </div>
 
         <!-- Main Content -->
-        <div class="col">
+        <div class="col-12 col-lg-8 col-xl-9">
+            <div class="d-flex justify-content-end mb-3 d-lg-none">
+                <button 
+                    type="button" 
+                    class="btn btn-primary" 
+                    onclick={() => showAddForm = !showAddForm}
+                    disabled={showAddForm}
+                    aria-label={showAddForm ? 'Hide add candidate form' : 'Show add candidate form'}
+                >
+                    <i class="bi bi-{showAddForm ? 'dash' : 'plus'}-circle me-2"></i>
+                    Add Candidate
+                </button>
+            </div>
+
+            <!-- Mobile Form (visible on smaller screens) -->
+            <div class="d-lg-none">
+                {#if showAddForm}
+                    <div class="card mb-3" transition:slide={{ duration: 200 }}>
+                        <div class="card-body">
+                            <form onsubmit={(e) => { e.preventDefault(); handleSubmit(e); }}>
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <select class="form-select" bind:value={newCandidate.positionId} required>
+                                            <option value="">Position</option>
+                                            {#each positions as position}
+                                                <option value={position.id}>{position.title}</option>
+                                            {/each}
+                                        </select>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <input 
+                                            type="text" 
+                                            class="form-control"
+                                            bind:value={newCandidate.name}
+                                            placeholder="Name"
+                                            required
+                                        />
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <input 
+                                            type="email" 
+                                            class="form-control"
+                                            bind:value={newCandidate.email}
+                                            placeholder="Email"
+                                            required
+                                        />
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <select class="form-select" bind:value={newCandidate.source} required>
+                                            <option value="">Source</option>
+                                            <option value="recruiter">Recruiter</option>
+                                            <option value="referral">Referral</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <input 
+                                            type="text" 
+                                            class="form-control"
+                                            bind:value={newCandidate.sourceName}
+                                            placeholder="Source Contact"
+                                            required
+                                        />
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <div class="input-group">
+                                            <input 
+                                                type="number" 
+                                                class="form-control"
+                                                bind:value={newCandidate.expectedPayRange.min}
+                                                placeholder="Min ($)"
+                                                required
+                                            />
+                                            <span class="input-group-text">to</span>
+                                            <input 
+                                                type="number" 
+                                                class="form-control"
+                                                bind:value={newCandidate.expectedPayRange.max}
+                                                placeholder="Max ($)"
+                                                required
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div class="col-12">
+                                        <div class="d-flex justify-content-end gap-2">
+                                            <button type="button" class="btn btn-secondary" style="width: 100px;" onclick={resetForm}>
+                                                Cancel
+                                            </button>
+                                            <button type="submit" class="btn btn-primary" style="width: 100px;" disabled={isSubmitting}>
+                                                {isSubmitting ? 'Adding...' : 'Add'}
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {#if formError}
+                                        <div class="col-12">
+                                            <div class="alert alert-danger">
+                                                <i class="bi bi-exclamation-circle-fill me-2"></i>
+                                                {formError}
+                                            </div>
+                                        </div>
+                                    {/if}
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                {/if}
+            </div>
+
             <div class="card">
                 <div class="card-body">
-                    <!-- Filters Toggle -->
-                    <button 
-                        type="button" 
-                        class="btn btn-link d-flex align-items-center w-100 text-start text-decoration-none mb-3" 
-                        onclick={() => showFilters = !showFilters}
-                        aria-label="Toggle filters panel"
-                    >
-                        <i class="bi bi-filter-circle-fill me-2"></i>
-                        <span class="me-auto">Filters</span>
-                        <small class="text-muted">Showing {getFilteredCandidates().length} of {candidates.length} candidates &nbsp;</small>
-                        <i class="bi bi-chevron-{showFilters ? 'up' : 'down'}"></i>
-                    </button>
-
-                    <!-- Filters Section with Transition -->
-                    {#if showFilters}
-                        <div class="mb-4" transition:slide={{ duration: 200 }}>
-                            <div class="row g-3">
-                                <div class="col-12 col-md-6">
-                                    <select class="form-select" bind:value={selectedPosition}>
-                                        <option value="">All Positions</option>
-                                        {#each positions as position}
-                                            <option value={position.id}>{position.title}</option>
-                                        {/each}
-                                    </select>
-                                </div>
-                                <div class="col-12 col-md-6">
-                                    <select class="form-select" bind:value={selectedSource}>
-                                        <option value="">All Sources</option>
-                                        <option value="recruiter">Recruiter</option>
-                                        <option value="referral">Referral</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-                    {/if}
-
                     <!-- Candidates List -->
                     <div class="candidates-list">
-                        {#if getFilteredCandidates().length === 0}
+                        {#if candidates.length === 0}
                             <div class="text-center text-muted py-5">
                                 <i class="bi bi-people display-4"></i>
                                 <p class="mt-2">No candidates found</p>
                             </div>
                         {:else}
-                            {#each getFilteredCandidates() as candidate}
+                            {#each candidates as candidate}
                                 <div class="card mb-3">
                                     <div class="card-body">
                                         <div class="d-flex justify-content-between align-items-start mb-3">
