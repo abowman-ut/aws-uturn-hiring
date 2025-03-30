@@ -125,40 +125,74 @@
                     <i class="bi {stage.icon}"></i>
                 </div>
                 <div class="stage-content">
-                    <h3>{stage.name}</h3>
                     {#if stage.status === 'current'}
+                        <h3>{stage.name}</h3>
                         <form onsubmit={(e) => { e.preventDefault(); updateStage(stage.id, isDecisionStage(stage.id) ? OUTCOMES.HIRE : OUTCOMES.PASS); }}>
                             <div class="form-group">
-                                <input 
-                                    type="text" 
-                                    id="decisionMaker"
-                                    bind:value={decisionMaker}
-                                    placeholder="Decision maker"
-                                    required
-                                    class="form-input"
-                                />
+                                <div class="input-with-icon">
+                                    <input 
+                                        type="text" 
+                                        id="decisionMaker"
+                                        bind:value={decisionMaker}
+                                        placeholder="Decision maker"
+                                        required
+                                        class="form-input"
+                                    />
+                                    <button 
+                                        type="button" 
+                                        class="icon-button" 
+                                        onclick={() => showNotes = !showNotes}
+                                        title="Toggle notes"
+                                        aria-label="Toggle notes"
+                                    >
+                                        <i class="bi bi-journal-text"></i>
+                                    </button>
+                                </div>
+                                {#if showNotes}
+                                    <textarea
+                                        bind:value={notes}
+                                        placeholder="Add notes..."
+                                        class="form-textarea mt-2"
+                                    ></textarea>
+                                {/if}
                             </div>
                             <div class="stage-actions">
-                                <button 
-                                    type="submit" 
-                                    class="btn btn-success"
-                                    disabled={isUpdating || !decisionMaker}
-                                >
-                                    <i class="bi bi-check-circle"></i>
-                                    {isDecisionStage(stage.id) ? 'Hire' : 'Pass'}
-                                </button>
-                                <button 
-                                    type="button" 
-                                    class="btn btn-danger"
-                                    onclick={() => updateStage(stage.id, OUTCOMES.REJECT)}
-                                    disabled={isUpdating || !decisionMaker}
-                                >
-                                    <i class="bi bi-x-circle"></i>
-                                    Reject
-                                </button>
+                                <div class="button-container">
+                                    <button 
+                                        type="submit" 
+                                        class="btn btn-success"
+                                        disabled={isUpdating || !decisionMaker}
+                                    >
+                                        <i class="bi bi-check-circle"></i>
+                                        {isDecisionStage(stage.id) ? 'Hire' : 'Pass'}
+                                    </button>
+                                    <button 
+                                        type="button" 
+                                        class="btn btn-danger"
+                                        onclick={() => updateStage(stage.id, OUTCOMES.REJECT)}
+                                        disabled={isUpdating || !decisionMaker}
+                                    >
+                                        <i class="bi bi-x-circle"></i>
+                                        Reject
+                                    </button>
+                                </div>
                             </div>
                         </form>
                     {:else}
+                        <div class="stage-header">
+                            <h3>{stage.name}</h3>
+                            {#if stage.notes}
+                                <button 
+                                    type="button" 
+                                    class="icon-button" 
+                                    onclick={() => selectedStage = selectedStage === stage.id ? null : stage.id}
+                                    title="Toggle notes"
+                                    aria-label="Toggle notes"
+                                >
+                                    <i class="bi bi-journal-text"></i>
+                                </button>
+                            {/if}
+                        </div>
                         <div class="stage-meta">
                             {#if stage.decisionMaker}
                                 <span class="decision-maker">
@@ -174,7 +208,7 @@
                                 </span>
                             {/if}
                         </div>
-                        {#if stage.notes}
+                        {#if stage.notes && selectedStage === stage.id}
                             <p class="notes">{stage.notes}</p>
                         {/if}
                     {/if}
@@ -293,9 +327,19 @@
     }
 
     .stage-actions {
+        margin-top: 0.75rem;
+        width: 100%;
+    }
+
+    .button-container {
         display: flex;
         gap: 0.5rem;
-        margin-top: 0.75rem;
+        width: 100%;
+    }
+
+    .button-container .btn {
+        flex: 1;
+        justify-content: center;
     }
 
     .btn {
@@ -308,6 +352,7 @@
         font-weight: 500;
         cursor: pointer;
         transition: all 0.2s ease;
+        width: 100%;
     }
 
     .btn:disabled {
@@ -377,6 +422,47 @@
         font-size: 0.875rem;
         min-height: 80px;
         resize: vertical;
+    }
+
+    .input-with-icon {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .icon-button {
+        background: none;
+        border: none;
+        padding: 0.5rem;
+        cursor: pointer;
+        color: #64748b;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: color 0.2s ease;
+    }
+
+    .icon-button:hover {
+        color: #1e293b;
+    }
+
+    .mt-2 {
+        margin-top: 0.5rem;
+    }
+
+    .stage-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.5rem;
+    }
+
+    .stage-header h3 {
+        margin: 0;
+    }
+
+    .stage-header .icon-button {
+        padding: 0.25rem;
     }
 
     @media (max-width: 767.98px) {
