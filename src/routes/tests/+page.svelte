@@ -1,84 +1,109 @@
 <script>
     import { base } from '$app/paths';
+    import { untrack } from 'svelte';
+
+    // Page state
     let title = $state('AWS SvelteKit Test');
-    let pageTitle = $derived(title);
-    let positionsTestResult = $state(null);
-    let candidatesTestResult = $state(null);
-    let testDataResult = $state(null);
-    let isGeneratingData = $state(false);
-    let isCleaningData = $state(false);
-    let positions = $state([]);
-    let candidates = $state([]);
-    let isLoadingData = $state(false);
+    let { data } = $props();
     
-    $effect(() => {
-        document.title = pageTitle;
+    // Test results state
+    let testResults = $state({
+        positions: null,
+        candidates: null,
+        testData: null
+    });
+    
+    // Loading states
+    let isLoading = $state({
+        data: false,
+        generating: false,
+        cleaning: false
     });
 
-    let { data } = $props();
+    // Data state
+    let testData = $state({
+        positions: [],
+        candidates: []
+    });
+
+    // Set page title
+    $effect(() => {
+        document.title = title;
+    });
+
+    // Computed class for DB status
     let dbStatusClass = $derived(data?.dbStatus?.status === 'success' ? 'success' : 'error');
 
+    // Load test data
+    async function loadTestData() {
+        if (isLoading.data) return;
+        
+        try {
+            isLoading.data = true;
+            
+            // Load data in parallel
+            const [positionsRes, candidatesRes] = await Promise.all([
+                fetch('/api/positions'),
+                fetch('/api/candidates')
+            ]);
+
+            if (!positionsRes.ok) throw new Error('Failed to load positions');
+            if (!candidatesRes.ok) throw new Error('Failed to load candidates');
+
+            // Update state atomically
+            const positions = await positionsRes.json();
+            const candidates = await candidatesRes.json();
+            
+            testData = {
+                positions: positions.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)),
+                candidates
+            };
+        } catch (error) {
+            console.error('Error loading test data:', error);
+        } finally {
+            isLoading.data = false;
+        }
+    }
+
+    // Load data on mount
+    $effect(() => {
+        loadTestData();
+    });
+
+    // Test APIs
     async function testPositionsAPI() {
         try {
-            // Test POST
-            const newPosition = {
+            const position = {
                 title: 'Test Position',
                 description: 'This is a test position',
                 requirements: 'Test requirements',
                 status: 'open'
             };
             
-            const createResponse = await fetch('/api/positions', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(newPosition)
-            });
+            // Test CRUD operations
+            const created = await testCRUD('/api/positions', position);
             
-            if (!createResponse.ok) throw new Error('Failed to create position');
-            const createdPosition = await createResponse.json();
-            
-            // Test GET (single)
-            const getResponse = await fetch(`/api/positions?id=${createdPosition.id}`);
-            if (!getResponse.ok) throw new Error('Failed to get position');
-            const fetchedPosition = await getResponse.json();
-            
-            // Test PUT
-            const updatedPosition = {
-                ...fetchedPosition,
-                title: 'Updated Test Position'
-            };
-            
-            const updateResponse = await fetch('/api/positions', {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(updatedPosition)
-            });
-            
-            if (!updateResponse.ok) throw new Error('Failed to update position');
-            
-            // Test DELETE
-            const deleteResponse = await fetch(`/api/positions?id=${createdPosition.id}`, {
-                method: 'DELETE'
-            });
-            
-            if (!deleteResponse.ok) throw new Error('Failed to delete position');
-            
-            positionsTestResult = {
-                success: true,
-                message: 'All position API tests passed successfully!'
+            testResults = {
+                ...testResults,
+                positions: {
+                    success: true,
+                    message: 'All position API tests passed successfully!'
+                }
             };
         } catch (error) {
-            positionsTestResult = {
-                success: false,
-                message: `Position API test failed: ${error.message}`
+            testResults = {
+                ...testResults,
+                positions: {
+                    success: false,
+                    message: `Position API test failed: ${error.message}`
+                }
             };
         }
     }
 
     async function testCandidatesAPI() {
         try {
-            // Test POST
-            const newCandidate = {
+            const candidate = {
                 name: 'Test Candidate',
                 email: 'test@example.com',
                 phone: '123-456-7890',
@@ -87,66 +112,74 @@
                 positionId: 'test-position-id'
             };
             
-            const createResponse = await fetch('/api/candidates', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(newCandidate)
-            });
+            // Test CRUD operations
+            await testCRUD('/api/candidates', candidate);
             
-            if (!createResponse.ok) throw new Error('Failed to create candidate');
-            const createdCandidate = await createResponse.json();
-            
-            // Test GET (single)
-            const getResponse = await fetch(`/api/candidates?id=${createdCandidate.id}`);
-            if (!getResponse.ok) throw new Error('Failed to get candidate');
-            const fetchedCandidate = await getResponse.json();
-            
-            // Test PUT
-            const updatedCandidate = {
-                ...fetchedCandidate,
-                name: 'Updated Test Candidate'
-            };
-            
-            const updateResponse = await fetch('/api/candidates', {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(updatedCandidate)
-            });
-            
-            if (!updateResponse.ok) throw new Error('Failed to update candidate');
-            
-            // Test DELETE
-            const deleteResponse = await fetch(`/api/candidates?id=${createdCandidate.id}`, {
-                method: 'DELETE'
-            });
-            
-            if (!deleteResponse.ok) throw new Error('Failed to delete candidate');
-            
-            candidatesTestResult = {
-                success: true,
-                message: 'All candidate API tests passed successfully!'
+            testResults = {
+                ...testResults,
+                candidates: {
+                    success: true,
+                    message: 'All candidate API tests passed successfully!'
+                }
             };
         } catch (error) {
-            candidatesTestResult = {
-                success: false,
-                message: `Candidate API test failed: ${error.message}`
+            testResults = {
+                ...testResults,
+                candidates: {
+                    success: false,
+                    message: `Candidate API test failed: ${error.message}`
+                }
             };
         }
     }
 
+    // Helper function for CRUD testing
+    async function testCRUD(endpoint, data) {
+        // Create
+        const createRes = await fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        if (!createRes.ok) throw new Error('Create failed');
+        const created = await createRes.json();
+        
+        // Read
+        const readRes = await fetch(`${endpoint}?id=${created.id}`);
+        if (!readRes.ok) throw new Error('Read failed');
+        
+        // Update
+        const updateRes = await fetch(endpoint, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ...created, title: 'Updated Test' })
+        });
+        if (!updateRes.ok) throw new Error('Update failed');
+        
+        // Delete
+        const deleteRes = await fetch(`${endpoint}?id=${created.id}`, {
+            method: 'DELETE'
+        });
+        if (!deleteRes.ok) throw new Error('Delete failed');
+        
+        return created;
+    }
+
+    // Generate test data
     async function generateTestData() {
-        isGeneratingData = true;
-        testDataResult = null;
+        if (isLoading.generating) return;
         
         try {
-            // Generate positions
+            isLoading.generating = true;
+            testResults.testData = null;
+            
             const positions = [
                 {
                     title: 'Senior Software Engineer',
                     department: 'Engineering',
                     hiringManager: 'Sarah Chen',
                     timeline: 'Q2',
-                    description: 'Looking for an experienced software engineer to join our team',
+                    description: 'Looking for an experienced software engineer',
                     requirements: '5+ years experience, React, Node.js, AWS',
                     status: 'open'
                 },
@@ -155,206 +188,128 @@
                     department: 'Management',
                     hiringManager: 'Michael Rodriguez',
                     timeline: 'Q3',
-                    description: 'Seeking a product manager to drive our product development',
-                    requirements: '3+ years PM experience, Agile, User Research',
-                    status: 'open'
-                },
-                {
-                    title: 'UX Designer',
-                    department: 'Engineering',
-                    hiringManager: 'Emily Thompson',
-                    timeline: 'Q1',
-                    description: 'Join our design team to create beautiful user experiences',
-                    requirements: '3+ years UX experience, Figma, User Testing',
-                    status: 'open'
-                },
-                {
-                    title: 'Sales Director',
-                    department: 'Sales',
-                    hiringManager: 'David Wilson',
-                    timeline: 'Q4',
-                    description: 'Lead our sales team to drive revenue growth',
-                    requirements: '8+ years sales experience, Team Leadership, B2B Sales',
+                    description: 'Seeking a product manager',
+                    requirements: '3+ years PM experience',
                     status: 'open'
                 }
             ];
 
-            // Create positions
+            // Create positions and their candidates
             for (const position of positions) {
-                const response = await fetch('/api/positions', {
+                const posRes = await fetch('/api/positions', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(position)
                 });
+                if (!posRes.ok) throw new Error('Failed to create position');
                 
-                if (!response.ok) throw new Error('Failed to create position');
-                const createdPosition = await response.json();
+                const pos = await posRes.json();
                 
-                // Generate candidates for each position
+                // Create candidates for this position
                 const candidates = [
                     {
                         name: 'John Smith',
-                        email: 'john.smith@example.com',
+                        email: 'john@example.com',
                         phone: '555-0101',
-                        resume: 'Experienced software engineer with 8 years of experience...',
                         status: 'cv_review',
-                        positionId: createdPosition.id,
-                        expectedPayRange: {
-                            min: 120000,
-                            max: 150000,
-                            currency: 'USD'
-                        },
-                        source: 'recruiter',
-                        sourceName: 'TechRecruiters Inc.'
+                        positionId: pos.id
                     },
                     {
                         name: 'Sarah Johnson',
-                        email: 'sarah.j@example.com',
+                        email: 'sarah@example.com',
                         phone: '555-0102',
-                        resume: 'Product manager with 5 years of experience...',
                         status: 'cv_review',
-                        positionId: createdPosition.id,
-                        expectedPayRange: {
-                            min: 130000,
-                            max: 160000,
-                            currency: 'USD'
-                        },
-                        source: 'referral',
-                        sourceName: 'Michael Chen'
-                    },
-                    {
-                        name: 'Michael Chen',
-                        email: 'm.chen@example.com',
-                        phone: '555-0103',
-                        resume: 'UX designer with 4 years of experience...',
-                        status: 'cv_review',
-                        positionId: createdPosition.id,
-                        expectedPayRange: {
-                            min: 100000,
-                            max: 130000,
-                            currency: 'USD'
-                        },
-                        source: 'recruiter',
-                        sourceName: 'DesignRecruiters LLC'
+                        positionId: pos.id
                     }
                 ];
 
-                // Create candidates
                 for (const candidate of candidates) {
-                    const response = await fetch('/api/candidates', {
+                    const candRes = await fetch('/api/candidates', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(candidate)
                     });
-                    
-                    if (!response.ok) throw new Error('Failed to create candidate');
+                    if (!candRes.ok) throw new Error('Failed to create candidate');
                 }
             }
 
-            testDataResult = {
-                success: true,
-                message: 'Successfully generated test data: 4 positions and 12 candidates'
+            testResults = {
+                ...testResults,
+                testData: {
+                    success: true,
+                    message: 'Successfully generated test data'
+                }
             };
 
-            // Refresh the data view
             await loadTestData();
         } catch (error) {
-            testDataResult = {
-                success: false,
-                message: `Failed to generate test data: ${error.message}`
+            testResults = {
+                ...testResults,
+                testData: {
+                    success: false,
+                    message: `Failed to generate test data: ${error.message}`
+                }
             };
         } finally {
-            isGeneratingData = false;
+            isLoading.generating = false;
         }
     }
 
-    async function loadTestData() {
-        try {
-            // Load all positions
-            const positionsResponse = await fetch('/api/positions');
-            if (!positionsResponse.ok) throw new Error('Failed to load positions');
-            positions = await positionsResponse.json();
-            console.log('Loaded positions:', positions);
-
-            // Load all candidates
-            const candidatesResponse = await fetch('/api/candidates');
-            if (!candidatesResponse.ok) throw new Error('Failed to load candidates');
-            candidates = await candidatesResponse.json();
-            console.log('Loaded candidates:', candidates);
-        } catch (error) {
-            console.error('Error loading test data:', error);
-        }
-    }
-
-    // Load data when component mounts
-    $effect(() => {
-        console.log('Component mounted, loading data...');
-        loadTestData();
-    });
-
-    // Helper function to get candidates for a position
-    function getCandidatesForPosition(positionId) {
-        const filteredCandidates = candidates.filter(c => c.positionId === positionId);
-        console.log(`Candidates for position ${positionId}:`, filteredCandidates);
-        return filteredCandidates;
-    }
-
-    // Effect to monitor positions changes
-    $effect(() => {
-        $inspect(positions, 'Positions updated');
-    });
-
-    // Effect to monitor candidates changes
-    $effect(() => {
-        $inspect(candidates, 'Candidates updated');
-    });
-
+    // Clean up test data
     async function cleanupTestData() {
-        isCleaningData = true;
-        testDataResult = null;
+        if (isLoading.cleaning) return;
         
         try {
-            // First get all positions
-            const positionsResponse = await fetch('/api/positions');
-            if (!positionsResponse.ok) throw new Error('Failed to load positions');
-            const positions = await positionsResponse.json();
-            
-            // Delete all positions
-            for (const position of positions) {
-                const response = await fetch(`/api/positions?id=${position.id}`, {
-                    method: 'DELETE'
-                });
-                if (!response.ok) throw new Error(`Failed to delete position ${position.id}`);
-            }
+            isLoading.cleaning = true;
+            testResults.testData = null;
 
-            // Then get all candidates
-            const candidatesResponse = await fetch('/api/candidates');
-            if (!candidatesResponse.ok) throw new Error('Failed to load candidates');
-            const candidates = await candidatesResponse.json();
-            
-            // Delete all candidates
-            for (const candidate of candidates) {
-                const response = await fetch(`/api/candidates?id=${candidate.id}`, {
-                    method: 'DELETE'
-                });
-                if (!response.ok) throw new Error(`Failed to delete candidate ${candidate.id}`);
-            }
+            // Delete all positions and candidates
+            await Promise.all([
+                deleteAllItems('/api/positions'),
+                deleteAllItems('/api/candidates')
+            ]);
 
-            testDataResult = {
-                success: true,
-                message: `Successfully cleaned up ${positions.length} positions and ${candidates.length} candidates`
+            testResults = {
+                ...testResults,
+                testData: {
+                    success: true,
+                    message: 'Successfully cleaned up test data'
+                }
             };
 
-            // Refresh the data view
             await loadTestData();
         } catch (error) {
-            testDataResult = {
-                success: false,
-                message: `Failed to clean up test data: ${error.message}`
+            testResults = {
+                ...testResults,
+                testData: {
+                    success: false,
+                    message: `Failed to clean up test data: ${error.message}`
+                }
             };
         } finally {
-            isCleaningData = false;
+            isLoading.cleaning = false;
         }
+    }
+
+    // Helper to delete all items of a type
+    async function deleteAllItems(endpoint) {
+        const res = await fetch(endpoint);
+        if (!res.ok) throw new Error(`Failed to fetch items from ${endpoint}`);
+        
+        const items = await res.json();
+        
+        await Promise.all(
+            items.map(item => 
+                fetch(`${endpoint}?id=${item.id}`, { method: 'DELETE' })
+            )
+        );
+    }
+
+    // Helper to get candidates for a position
+    function getCandidatesForPosition(positionId) {
+        return untrack(() => 
+            testData.candidates.filter(c => c.positionId === positionId)
+        );
     }
 </script>
 
@@ -410,24 +365,24 @@
                     <button 
                         class="btn btn-primary me-2" 
                         onclick={generateTestData}
-                        disabled={isGeneratingData}
+                        disabled={isLoading.generating}
                     >
-                        <i class="bi {isGeneratingData ? 'bi-hourglass-split' : 'bi-plus-circle-fill'}"></i>
-                        {isGeneratingData ? 'Generating...' : 'Generate Test Data'}
+                        <i class="bi {isLoading.generating ? 'bi-hourglass-split' : 'bi-plus-circle-fill'}"></i>
+                        {isLoading.generating ? 'Generating...' : 'Generate Test Data'}
                     </button>
                     <button 
                         class="btn btn-danger" 
                         onclick={cleanupTestData}
-                        disabled={isCleaningData}
+                        disabled={isLoading.cleaning}
                     >
-                        <i class="bi {isCleaningData ? 'bi-hourglass-split' : 'bi-trash-fill'}"></i>
-                        {isCleaningData ? 'Cleaning...' : 'Clean Up Test Data'}
+                        <i class="bi {isLoading.cleaning ? 'bi-hourglass-split' : 'bi-trash-fill'}"></i>
+                        {isLoading.cleaning ? 'Cleaning...' : 'Clean Up Test Data'}
                     </button>
                 </div>
-                {#if testDataResult}
-                    <div class="test-result {testDataResult.success ? 'success' : 'error'}">
-                        <i class="bi {testDataResult.success ? 'bi-check-circle-fill' : 'bi-x-circle-fill'}"></i>
-                        <span>{testDataResult.message}</span>
+                {#if testResults.testData}
+                    <div class="test-result {testResults.testData.success ? 'success' : 'error'}">
+                        <i class="bi {testResults.testData.success ? 'bi-check-circle-fill' : 'bi-x-circle-fill'}"></i>
+                        <span>{testResults.testData.message}</span>
                     </div>
                 {/if}
             </div>
@@ -440,14 +395,14 @@
                 <h2>Test Data View</h2>
             </div>
             <div class="api-test-group">
-                {#if positions.length === 0}
+                {#if testData.positions.length === 0}
                     <div class="empty-state">
                         <i class="bi bi-database-x"></i>
                         <span>No test data available. Generate some data first!</span>
                     </div>
                 {:else}
                     <div class="data-view">
-                        {#each positions as position}
+                        {#each testData.positions as position}
                             <div class="position-card">
                                 <div class="position-header">
                                     <div class="position-title">
@@ -509,10 +464,10 @@
                         <i class="bi bi-play-fill"></i> Run Tests
                     </button>
                 </div>
-                {#if positionsTestResult}
-                    <div class="test-result {positionsTestResult.success ? 'success' : 'error'}">
-                        <i class="bi {positionsTestResult.success ? 'bi-check-circle-fill' : 'bi-x-circle-fill'}"></i>
-                        <span>{positionsTestResult.message}</span>
+                {#if testResults.positions}
+                    <div class="test-result {testResults.positions.success ? 'success' : 'error'}">
+                        <i class="bi {testResults.positions.success ? 'bi-check-circle-fill' : 'bi-x-circle-fill'}"></i>
+                        <span>{testResults.positions.message}</span>
                     </div>
                 {/if}
             </div>
@@ -525,10 +480,10 @@
                         <i class="bi bi-play-fill"></i> Run Tests
                     </button>
                 </div>
-                {#if candidatesTestResult}
-                    <div class="test-result {candidatesTestResult.success ? 'success' : 'error'}">
-                        <i class="bi {candidatesTestResult.success ? 'bi-check-circle-fill' : 'bi-x-circle-fill'}"></i>
-                        <span>{candidatesTestResult.message}</span>
+                {#if testResults.candidates}
+                    <div class="test-result {testResults.candidates.success ? 'success' : 'error'}">
+                        <i class="bi {testResults.candidates.success ? 'bi-check-circle-fill' : 'bi-x-circle-fill'}"></i>
+                        <span>{testResults.candidates.message}</span>
                     </div>
                 {/if}
             </div>

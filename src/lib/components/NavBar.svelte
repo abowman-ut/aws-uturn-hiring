@@ -14,7 +14,7 @@
     <div class="container-fluid px-3">
         <a class="navbar-brand d-flex align-items-center" href="/" data-sveltekit-preload-data="hover">
             <i class="bi bi-arrow-repeat brand-icon"></i>
-            <span class="brand-text">Uturn</span>
+            <span class="brand-text">Uturn Hiring</span>
             {#if isDev}
                 <span class="dev-indicator">dev</span>
             {/if}

@@ -2,6 +2,24 @@ import { dynamoOperation, POSITIONS_TABLE } from '$lib/dynamodb';
 import { GetCommand, PutCommand, ScanCommand, DeleteCommand } from '@aws-sdk/lib-dynamodb';
 import { json } from '@sveltejs/kit';
 
+// Validate position data
+function validatePosition(position) {
+    const errors = [];
+    
+    // Required fields
+    if (!position.title) errors.push('Title is required');
+    if (!position.department) errors.push('Department is required');
+    if (!position.hiringManager) errors.push('Hiring Manager is required');
+    if (!position.timeline) errors.push('Timeline is required');
+    
+    // Validate state if provided
+    if (position.state && !['open', 'on_hold', 'cancelled', 'filled'].includes(position.state)) {
+        errors.push('State must be either "open", "on_hold", "cancelled", or "filled"');
+    }
+    
+    return errors;
+}
+
 // GET /api/positions
 export async function GET({ url }) {
     try {
@@ -38,9 +56,20 @@ export async function POST({ request }) {
     try {
         const position = await request.json();
         
+        // Validate position data
+        const errors = validatePosition(position);
+        if (errors.length > 0) {
+            return json({ error: 'Validation failed', details: errors }, { status: 400 });
+        }
+        
         // Generate ID if not provided
         if (!position.id) {
             position.id = crypto.randomUUID();
+        }
+        
+        // Set default state if not provided
+        if (!position.state) {
+            position.state = 'open';
         }
         
         // Add timestamps
@@ -66,6 +95,12 @@ export async function PUT({ request }) {
         
         if (!position.id) {
             return json({ error: 'Position ID is required' }, { status: 400 });
+        }
+        
+        // Validate position data
+        const errors = validatePosition(position);
+        if (errors.length > 0) {
+            return json({ error: 'Validation failed', details: errors }, { status: 400 });
         }
         
         // Update timestamp
