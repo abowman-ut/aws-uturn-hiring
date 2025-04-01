@@ -204,7 +204,7 @@
                                     <i class="bi bi-list-ul select-icon"></i>
                                     <select class="form-select ps-4" bind:value={newCandidate.positionId} required>
                                         <option value="">&nbsp;&nbsp;Position</option>
-                                        {#each positions as position}
+                                        {#each positions.filter(p => p.state === 'open') as position}
                                             <option value={position.id}>&nbsp;&nbsp;{position.title}</option>
                                         {/each}
                                     </select>
@@ -314,7 +314,7 @@
                                             <i class="bi bi-list-ul select-icon"></i>
                                             <select class="form-select ps-4" bind:value={newCandidate.positionId} required>
                                                 <option value="">&nbsp;&nbsp;Position</option>
-                                                {#each positions as position}
+                                                {#each positions.filter(p => p.state === 'open') as position}
                                                     <option value={position.id}>&nbsp;&nbsp;{position.title}</option>
                                                 {/each}
                                             </select>
