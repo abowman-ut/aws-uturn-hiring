@@ -20,9 +20,8 @@
         email: '',
         status: 'cv_review',
         positionId: '',
-        expectedPayRange: {
-            min: '',
-            max: '',
+        expectedSalary: {
+            amount: '',
             currency: 'USD'
         },
         source: '',
@@ -71,8 +70,9 @@
     }
 
     // Helper function to format pay range
-    function formatPayRange({ min, max, currency = 'USD' } = {}) {
-        return min && max ? `${currency} ${min.toLocaleString()} - ${max.toLocaleString()}` : 'Not specified';
+    function formatPayRange({ amount, currency = 'USD' } = {}) {
+        if (!amount) return 'Not specified';
+        return `${currency} ${amount.toLocaleString()}`;
     }
 
     // Helper function to format source
@@ -136,7 +136,7 @@
             email: '',
             status: 'cv_review',
             positionId: '',
-            expectedPayRange: { min: '', max: '', currency: 'USD' },
+            expectedSalary: { amount: '', currency: 'USD' },
             source: '',
             sourceName: ''
         };
@@ -235,16 +235,8 @@
                                     <input 
                                         type="number" 
                                         class="form-control"
-                                        bind:value={newCandidate.expectedPayRange.min}
-                                        placeholder="Min ($)"
-                                        required
-                                    />
-                                    <span class="input-group-text">to</span>
-                                    <input 
-                                        type="number" 
-                                        class="form-control"
-                                        bind:value={newCandidate.expectedPayRange.max}
-                                        placeholder="Max ($)"
+                                        bind:value={newCandidate.expectedSalary.amount}
+                                        placeholder="Salary Ask ($)"
                                         required
                                     />
                                 </div>
@@ -355,16 +347,8 @@
                                             <input 
                                                 type="number" 
                                                 class="form-control"
-                                                bind:value={newCandidate.expectedPayRange.min}
-                                                placeholder="Min ($)"
-                                                required
-                                            />
-                                            <span class="input-group-text">to</span>
-                                            <input 
-                                                type="number" 
-                                                class="form-control"
-                                                bind:value={newCandidate.expectedPayRange.max}
-                                                placeholder="Max ($)"
+                                                bind:value={newCandidate.expectedSalary.amount}
+                                                placeholder="Salary Ask ($)"
                                                 required
                                             />
                                         </div>
@@ -458,7 +442,7 @@
                                                     </button>
                                                     {#if activeSalaryPopup === candidate.id}
                                                         <div class="salary-popup position-absolute bg-dark text-white p-2 rounded" style="top: -40px; right: 0; z-index: 1000;">
-                                                            ${candidate.expectedPayRange?.min?.toLocaleString() || 0} - ${candidate.expectedPayRange?.max?.toLocaleString() || 0}
+                                                            ${candidate.expectedSalary?.amount?.toLocaleString() || 0}
                                                         </div>
                                                     {/if}
                                                     <button 
