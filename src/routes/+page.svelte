@@ -341,11 +341,6 @@
         margin: 0 0 1.5rem;
     }
 
-    p {
-        color: #64748b;
-        margin-bottom: 2rem;
-    }
-
     /* Stats Grid */
     .stats-grid {
         display: grid;
@@ -435,64 +430,6 @@
         gap: 1rem;
     }
 
-    .action-link {
-        display: flex;
-        align-items: center;
-        padding: 1.5rem;
-        background: #f8fafc;
-        border-radius: 12px;
-        text-decoration: none;
-        color: inherit;
-        transition: all 0.2s ease;
-        border: 1px solid #e2e8f0;
-    }
-
-    .action-link:hover {
-        background: #f1f5f9;
-        transform: translateY(-1px);
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-    }
-
-    .action-icon {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 3rem;
-        height: 3rem;
-        background: #4361ee;
-        border-radius: 10px;
-        margin-right: 1rem;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    }
-
-    .action-icon i {
-        color: white;
-        font-size: 1.25rem;
-    }
-
-    .action-content {
-        flex: 1;
-    }
-
-    .action-content h3 {
-        color: #1e293b;
-        font-size: 1.25rem;
-        font-weight: 500;
-        margin: 0 0 0.25rem;
-    }
-
-    .action-content p {
-        color: #64748b;
-        font-size: 0.875rem;
-        margin: 0;
-    }
-
-    .action-arrow {
-        color: #94a3b8;
-        font-size: 1.25rem;
-        margin-left: 1rem;
-    }
-
     /* Skeleton Loading Styles */
     @keyframes shimmer {
         0% {
@@ -501,13 +438,6 @@
         100% {
             background-position: 1000px 0;
         }
-    }
-
-    .skeleton {
-        background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-        background-size: 1000px 100%;
-        animation: shimmer 2s infinite;
-        border-radius: 4px;
     }
 
     .skeleton-header {
@@ -615,19 +545,6 @@
     @media (max-width: 640px) {
         .content-card {
             padding: 1.5rem;
-        }
-
-        .action-link {
-            padding: 1rem;
-        }
-
-        .action-icon {
-            width: 2.5rem;
-            height: 2.5rem;
-        }
-
-        .action-content h3 {
-            font-size: 1.125rem;
         }
 
         .stat-card {

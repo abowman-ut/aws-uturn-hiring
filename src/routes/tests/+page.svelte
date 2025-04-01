@@ -75,9 +75,16 @@
         try {
             const position = {
                 title: 'Test Position',
+                department: 'Engineering',
+                hiringManager: 'Test Manager',
+                timeline: 'Q2',
+                state: 'open',
+                payRange: {
+                    min: 100000,
+                    max: 150000
+                },
                 description: 'This is a test position',
-                requirements: 'Test requirements',
-                status: 'open'
+                requirements: 'Test requirements'
             };
             
             // Test CRUD operations
@@ -103,17 +110,60 @@
 
     async function testCandidatesAPI() {
         try {
+            // First create a test position to use for the candidate
+            const position = {
+                title: 'Test Position for Candidate',
+                department: 'Engineering',
+                hiringManager: 'Test Manager',
+                timeline: 'Q2',
+                state: 'open',
+                payRange: {
+                    min: 100000,
+                    max: 150000
+                }
+            };
+            
+            const posRes = await fetch('/api/positions', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(position)
+            });
+            
+            if (!posRes.ok) {
+                throw new Error('Failed to create test position');
+            }
+            
+            const testPosition = await posRes.json();
+
             const candidate = {
                 name: 'Test Candidate',
                 email: 'test@example.com',
-                phone: '123-456-7890',
-                resume: 'Test resume content',
+                positionId: testPosition.id,
+                expectedPayRange: {
+                    min: 120000,
+                    max: 140000,
+                    currency: 'USD'
+                },
+                source: 'recruiter',
+                sourceName: 'Test Recruiter',
                 status: 'cv_review',
-                positionId: 'test-position-id'
+                stages: [
+                    {
+                        id: 'cv_review',
+                        name: 'CV Review',
+                        startedAt: new Date().toISOString(),
+                        status: 'in_progress'
+                    }
+                ]
             };
             
             // Test CRUD operations
             await testCRUD('/api/candidates', candidate);
+            
+            // Clean up test position
+            await fetch(`/api/positions?id=${testPosition.id}`, {
+                method: 'DELETE'
+            });
             
             testResults = {
                 ...testResults,
@@ -179,18 +229,26 @@
                     department: 'Engineering',
                     hiringManager: 'Sarah Chen',
                     timeline: 'Q2',
+                    state: 'open',
+                    payRange: {
+                        min: 120000,
+                        max: 180000
+                    },
                     description: 'Looking for an experienced software engineer',
-                    requirements: '5+ years experience, React, Node.js, AWS',
-                    status: 'open'
+                    requirements: '5+ years experience, React, Node.js, AWS'
                 },
                 {
                     title: 'Product Manager',
                     department: 'Management',
                     hiringManager: 'Michael Rodriguez',
                     timeline: 'Q3',
+                    state: 'open',
+                    payRange: {
+                        min: 130000,
+                        max: 190000
+                    },
                     description: 'Seeking a product manager',
-                    requirements: '3+ years PM experience',
-                    status: 'open'
+                    requirements: '3+ years PM experience'
                 }
             ];
 
@@ -201,7 +259,10 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(position)
                 });
-                if (!posRes.ok) throw new Error('Failed to create position');
+                if (!posRes.ok) {
+                    const error = await posRes.json();
+                    throw new Error(`Failed to create position: ${error.error || 'Unknown error'}`);
+                }
                 
                 const pos = await posRes.json();
                 
@@ -210,16 +271,51 @@
                     {
                         name: 'John Smith',
                         email: 'john@example.com',
-                        phone: '555-0101',
+                        positionId: pos.id,
+                        expectedPayRange: {
+                            min: 140000,
+                            max: 160000,
+                            currency: 'USD'
+                        },
+                        source: 'recruiter',
+                        sourceName: 'LinkedIn Recruiter',
                         status: 'cv_review',
-                        positionId: pos.id
+                        stages: [
+                            {
+                                id: 'cv_review',
+                                name: 'CV Review',
+                                startedAt: new Date().toISOString(),
+                                status: 'in_progress'
+                            }
+                        ]
                     },
                     {
                         name: 'Sarah Johnson',
                         email: 'sarah@example.com',
-                        phone: '555-0102',
-                        status: 'cv_review',
-                        positionId: pos.id
+                        positionId: pos.id,
+                        expectedPayRange: {
+                            min: 150000,
+                            max: 170000,
+                            currency: 'USD'
+                        },
+                        source: 'referral',
+                        sourceName: 'Internal Employee',
+                        status: 'culture_fit',
+                        stages: [
+                            {
+                                id: 'cv_review',
+                                name: 'CV Review',
+                                startedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+                                completedAt: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString(),
+                                status: 'completed'
+                            },
+                            {
+                                id: 'culture_fit',
+                                name: 'Culture Fit',
+                                startedAt: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString(),
+                                status: 'in_progress'
+                            }
+                        ]
                     }
                 ];
 
@@ -229,7 +325,10 @@
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(candidate)
                     });
-                    if (!candRes.ok) throw new Error('Failed to create candidate');
+                    if (!candRes.ok) {
+                        const error = await candRes.json();
+                        throw new Error(`Failed to create candidate: ${error.error || 'Unknown error'}`);
+                    }
                 }
             }
 

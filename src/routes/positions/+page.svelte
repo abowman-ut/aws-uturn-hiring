@@ -12,6 +12,7 @@
     let formError = $state(null);
     let formSuccess = $state(null);
     let window = $state({ innerWidth: 0 });
+    let isLoading = $state(true);
 
     // Form data
     let newPosition = $state({
@@ -63,6 +64,7 @@
     });
 
     async function loadData() {
+        isLoading = true;
         try {
             const response = await fetch('/api/positions');
             if (!response.ok) throw new Error('Failed to load positions');
@@ -75,6 +77,8 @@
             }));
         } catch (error) {
             console.error('Error loading data:', error);
+        } finally {
+            isLoading = false;
         }
     }
 
@@ -336,28 +340,22 @@
                                 </div>
 
                                 <div class="col-12">
-                                    <div class="d-flex gap-2 align-items-center">
-                                        <div class="flex-grow-1">
-                                            <input 
-                                                type="number" 
-                                                class="form-control"
-                                                placeholder="Min ($)"
-                                                bind:value={newPosition.payRange.min}
-                                                min="0"
-                                                required
-                                            />
-                                        </div>
-                                        <div class="text-muted">to</div>
-                                        <div class="flex-grow-1">
-                                            <input 
-                                                type="number" 
-                                                class="form-control"
-                                                placeholder="Max ($)"
-                                                bind:value={newPosition.payRange.max}
-                                                min="0"
-                                                required
-                                            />
-                                        </div>
+                                    <div class="input-group">
+                                        <input 
+                                            type="number" 
+                                            class="form-control"
+                                            bind:value={newPosition.payRange.min}
+                                            placeholder="Min ($)"
+                                            required
+                                        />
+                                        <span class="input-group-text">to</span>
+                                        <input 
+                                            type="number" 
+                                            class="form-control"
+                                            bind:value={newPosition.payRange.max}
+                                            placeholder="Max ($)"
+                                            required
+                                        />
                                     </div>
                                 </div>
 
@@ -393,124 +391,139 @@
                 <div class="card-body">
                     <!-- Positions List -->
                     <div class="positions-list">
-                        {#if positions.length === 0}
+                        {#if isLoading}
+                            {#each Array(3) as _, i}
+                                <div class="card mb-3" in:fade>
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-start mb-3">
+                                            <div style="width: 60%;">
+                                                <div class="skeleton-line" style="width: 40%; height: 24px;"></div>
+                                                <div class="mt-2">
+                                                    <div class="skeleton-line" style="width: 70%; height: 16px;"></div>
+                                                    <div class="skeleton-line mt-2" style="width: 50%; height: 16px;"></div>
+                                                </div>
+                                            </div>
+                                            <div style="width: 30%;">
+                                                <div class="skeleton-line" style="width: 100%; height: 32px;"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {/each}
+                        {:else if positions.length === 0}
                             <div class="text-center text-muted py-5">
                                 <i class="bi bi-briefcase display-4"></i>
                                 <p class="mt-2">No positions found</p>
                             </div>
                         {:else}
-                            <div class="row g-3">
-                                {#each positions as position}
-                                    <div class="col-12 col-md-6 col-xl-4">
-                                        <div class="card h-100">
-                                            <div class="card-body">
-                                                <div class="d-flex justify-content-between align-items-start">
-                                                    <div>
-                                                        <h5 class="card-title mb-1 text-body-emphasis">{position.title}</h5>
-                                                        <div class="d-flex align-items-center text-muted small mb-1">
-                                                            <i class="bi bi-building me-2"></i>
-                                                            <span>{position.department}</span>
-                                                        </div>
-                                                    </div>
-                                                    <div class="d-flex align-items-center gap-2">
-                                                        <button 
-                                                            class="btn btn-info btn-sm py-0 px-2 text-white"
-                                                            title="Timeline"
-                                                            disabled
-                                                        >
-                                                            {position.timeline}
-                                                        </button>
-                                                        <button 
-                                                            class="btn btn-outline-success btn-sm py-0 px-2"
-                                                            onclick={(e) => showSalaryPopup(e, position)}
-                                                            aria-label="Show salary range"
-                                                        >
-                                                            <i class="bi bi-cash"></i>
-                                                        </button>
-                                                        {#if activeSalaryPopup === position.id}
-                                                            <div class="salary-popup position-absolute bg-dark text-white p-2 rounded" style="top: -40px; right: 0; z-index: 1000;">
-                                                                ${position.payRange?.min?.toLocaleString() || 0} - ${position.payRange?.max?.toLocaleString() || 0}
-                                                            </div>
-                                                        {/if}
-                                                        <button 
-                                                            class="btn btn-outline-danger btn-sm py-0 px-2"
-                                                            onclick={() => deletePosition(position.id)}
-                                                            title="Delete position"
-                                                            aria-label="Delete {position.title} position"
-                                                        >
-                                                            <i class="bi bi-trash"></i>
-                                                        </button>
-                                                    </div>
+                            {#each positions as position}
+                                <div class="card mb-3" in:fade>
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-start">
+                                            <div>
+                                                <h5 class="card-title mb-1">{position.title}</h5>
+                                                <div class="d-flex align-items-center text-muted small mb-1">
+                                                    <i class="bi bi-building me-2"></i>
+                                                    <span>{position.department}</span>
                                                 </div>
+                                            </div>
+                                            <div class="d-flex align-items-center gap-2">
+                                                <button 
+                                                    class="btn btn-info btn-sm text-white"
+                                                    title="Timeline"
+                                                    disabled
+                                                >
+                                                    {position.timeline}
+                                                </button>
+                                                <button 
+                                                    class="btn btn-outline-success btn-sm"
+                                                    onclick={(e) => showSalaryPopup(e, position)}
+                                                    aria-label="Show salary range"
+                                                >
+                                                    <i class="bi bi-cash"></i>
+                                                </button>
+                                                {#if activeSalaryPopup === position.id}
+                                                    <div class="salary-popup position-absolute bg-dark text-white p-2 rounded" style="top: -40px; right: 0; z-index: 1000;">
+                                                        ${position.payRange?.min?.toLocaleString() || 0} - ${position.payRange?.max?.toLocaleString() || 0}
+                                                    </div>
+                                                {/if}
+                                                <button 
+                                                    class="btn btn-outline-danger btn-sm"
+                                                    onclick={() => deletePosition(position.id)}
+                                                    title="Delete position"
+                                                    aria-label="Delete {position.title}"
+                                                >
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="d-flex align-items-center text-muted small">
+                                            <i class="bi bi-person me-2"></i>
+                                            <span>{position.hiringManager}</span>
+                                        </div>
+
+                                        <hr class="my-2">
+                                        
+                                        <div class="d-flex justify-content-between align-items-center text-muted small">
+                                            <!-- Position State -->
+                                            <div class="d-flex align-items-center position-relative">
+                                                <button 
+                                                    class="btn btn-link btn-sm p-0 text-decoration-none {STATES[position.state]?.class || 'text-primary'}"
+                                                    onclick={(e) => showStatusMenu(e, position)}
+                                                    style="font-size: inherit;"
+                                                >
+                                                    <div class="d-flex align-items-center">
+                                                        <i class="bi bi-circle-fill me-2" style="font-size: 8px; transform: translateY(1px);"></i>
+                                                        <span>{STATES[position.state]?.label || 'Open'}</span>
+                                                        <i class="bi bi-chevron-down ms-1" style="font-size: 0.75em;"></i>
+                                                    </div>
+                                                </button>
                                                 
-                                                <div class="d-flex align-items-center text-muted small">
-                                                    <i class="bi bi-person me-2"></i>
-                                                    <span>{position.hiringManager}</span>
+                                                {#if activeStatusMenu === position.id}
+                                                    <div class="status-menu position-absolute bg-white border rounded shadow-sm py-1" style="top: 100%; left: 0; z-index: 1000; min-width: 120px; margin-top: 4px;">
+                                                        {#each Object.entries(STATES) as [state, { label, class: className }]}
+                                                            <button 
+                                                                class="btn btn-link btn-sm w-100 text-start text-decoration-none {className}"
+                                                                onclick={() => updatePositionState(position, state)}
+                                                                style="font-size: inherit;"
+                                                            >
+                                                                <div class="d-flex align-items-center">
+                                                                    <i class="bi bi-circle-fill me-2" style="font-size: 8px; transform: translateY(1px);"></i>
+                                                                    {label}
+                                                                </div>
+                                                            </button>
+                                                        {/each}
+                                                    </div>
+                                                {/if}
+                                            </div>
+
+                                            <!-- Candidates Progress -->
+                                            <div class="d-flex align-items-center gap-3">
+                                                <div class="d-flex align-items-center" title="Total candidates">
+                                                    <i class="bi bi-people me-1"></i>
+                                                    <span>{candidateCounts[position.id]?.total || 0}</span>
                                                 </div>
-
-                                                <hr class="my-2">
-                                                
-                                                <div class="d-flex justify-content-between align-items-center text-muted small">
-                                                    <!-- Position State -->
-                                                    <div class="d-flex align-items-center position-relative">
-                                                        <button 
-                                                            class="btn btn-link btn-sm p-0 text-decoration-none {STATES[position.state]?.class || 'text-primary'}"
-                                                            onclick={(e) => showStatusMenu(e, position)}
-                                                            style="font-size: inherit;"
-                                                        >
-                                                            <div class="d-flex align-items-center">
-                                                                <i class="bi bi-circle-fill me-2" style="font-size: 8px; transform: translateY(1px);"></i>
-                                                                <span>{STATES[position.state]?.label || 'Open'}</span>
-                                                                <i class="bi bi-chevron-down ms-1" style="font-size: 0.75em;"></i>
-                                                            </div>
-                                                        </button>
-                                                        
-                                                        {#if activeStatusMenu === position.id}
-                                                            <div class="status-menu position-absolute bg-white border rounded shadow-sm py-1" style="top: 100%; left: 0; z-index: 1000; min-width: 120px; margin-top: 4px;">
-                                                                {#each Object.entries(STATES) as [state, { label, class: className }]}
-                                                                    <button 
-                                                                        class="btn btn-link btn-sm w-100 text-start text-decoration-none {className}"
-                                                                        onclick={() => updatePositionState(position, state)}
-                                                                        style="font-size: inherit;"
-                                                                    >
-                                                                        <div class="d-flex align-items-center">
-                                                                            <i class="bi bi-circle-fill me-2" style="font-size: 8px; transform: translateY(1px);"></i>
-                                                                            {label}
-                                                                        </div>
-                                                                    </button>
-                                                                {/each}
-                                                            </div>
-                                                        {/if}
-                                                    </div>
-
-                                                    <!-- Candidates Progress -->
-                                                    <div class="d-flex align-items-center gap-3">
-                                                        <div class="d-flex align-items-center" title="Total candidates">
-                                                            <i class="bi bi-people me-1"></i>
-                                                            <span>{candidateCounts[position.id]?.total || 0}</span>
-                                                        </div>
-                                                        <div class="vr"></div>
-                                                        <div class="d-flex align-items-center gap-2">
-                                                            <span title="CV Review" class="d-flex align-items-center">
-                                                                <i class="bi bi-file-text me-1"></i>
-                                                                {candidateCounts[position.id]?.stages?.cv_review || 0}
-                                                            </span>
-                                                            <span title="Culture Fit" class="d-flex align-items-center">
-                                                                <i class="bi bi-person-check me-1"></i>
-                                                                {candidateCounts[position.id]?.stages?.culture_fit || 0}
-                                                            </span>
-                                                            <span title="Interview" class="d-flex align-items-center">
-                                                                <i class="bi bi-code-square me-1"></i>
-                                                                {candidateCounts[position.id]?.stages?.interview || 0}
-                                                            </span>
-                                                        </div>
-                                                    </div>
+                                                <div class="vr"></div>
+                                                <div class="d-flex align-items-center gap-2">
+                                                    <span title="CV Review" class="d-flex align-items-center">
+                                                        <i class="bi bi-file-text me-1"></i>
+                                                        {candidateCounts[position.id]?.stages?.cv_review || 0}
+                                                    </span>
+                                                    <span title="Culture Fit" class="d-flex align-items-center">
+                                                        <i class="bi bi-person-check me-1"></i>
+                                                        {candidateCounts[position.id]?.stages?.culture_fit || 0}
+                                                    </span>
+                                                    <span title="Interview" class="d-flex align-items-center">
+                                                        <i class="bi bi-code-square me-1"></i>
+                                                        {candidateCounts[position.id]?.stages?.interview || 0}
+                                                    </span>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
-                                {/each}
-                            </div>
+                                </div>
+                            {/each}
                         {/if}
                     </div>
                 </div>
@@ -520,7 +533,22 @@
 </div>
 
 <style>
-    /* Select with icon styles */
+    .skeleton-line {
+        background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+        background-size: 200% 100%;
+        animation: loading 1.5s infinite;
+        border-radius: 4px;
+    }
+
+    @keyframes loading {
+        0% {
+            background-position: 200% 0;
+        }
+        100% {
+            background-position: -200% 0;
+        }
+    }
+
     .select-wrapper {
         position: relative;
     }

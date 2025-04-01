@@ -39,11 +39,6 @@
         loadData();
     });
 
-    // Initialize timeline visibility when candidates load
-    // $effect(() => {
-    //     showTimelines = candidates.reduce((acc, c) => ({ ...acc, [c.id]: false }), {});
-    // });
-
     async function loadData() {
         isLoading = true;
         try {
@@ -163,12 +158,15 @@
                     <form onsubmit={(e) => { e.preventDefault(); handleSubmit(e); }}>
                         <div class="row g-3">
                             <div class="col-12">
-                                <select class="form-select" bind:value={newCandidate.positionId} required>
-                                    <option value="">Position</option>
-                                    {#each positions as position}
-                                        <option value={position.id}>{position.title}</option>
-                                    {/each}
-                                </select>
+                                <div class="select-wrapper">
+                                    <i class="bi bi-list-ul select-icon"></i>
+                                    <select class="form-select ps-4" bind:value={newCandidate.positionId} required>
+                                        <option value="">&nbsp;&nbsp;Position</option>
+                                        {#each positions as position}
+                                            <option value={position.id}>&nbsp;&nbsp;{position.title}</option>
+                                        {/each}
+                                    </select>
+                                </div>
                             </div>
 
                             <div class="col-12">
@@ -192,11 +190,14 @@
                             </div>
 
                             <div class="col-12">
-                                <select class="form-select" bind:value={newCandidate.source} required>
-                                    <option value="">Source</option>
-                                    <option value="recruiter">Recruiter</option>
-                                    <option value="referral">Referral</option>
-                                </select>
+                                <div class="select-wrapper">
+                                    <i class="bi bi-person-bounding-box select-icon"></i>
+                                    <select class="form-select ps-4" bind:value={newCandidate.source} required>
+                                        <option value="">&nbsp;&nbsp;Source</option>
+                                        <option value="recruiter">&nbsp;&nbsp;Recruiter</option>
+                                        <option value="referral">&nbsp;&nbsp;Referral</option>
+                                    </select>
+                                </div>
                             </div>
 
                             <div class="col-12">
@@ -277,12 +278,15 @@
                             <form onsubmit={(e) => { e.preventDefault(); handleSubmit(e); }}>
                                 <div class="row g-3">
                                     <div class="col-md-6">
-                                        <select class="form-select" bind:value={newCandidate.positionId} required>
-                                            <option value="">Position</option>
-                                            {#each positions as position}
-                                                <option value={position.id}>{position.title}</option>
-                                            {/each}
-                                        </select>
+                                        <div class="select-wrapper">
+                                            <i class="bi bi-list-ul select-icon"></i>
+                                            <select class="form-select ps-4" bind:value={newCandidate.positionId} required>
+                                                <option value="">&nbsp;&nbsp;Position</option>
+                                                {#each positions as position}
+                                                    <option value={position.id}>&nbsp;&nbsp;{position.title}</option>
+                                                {/each}
+                                            </select>
+                                        </div>
                                     </div>
 
                                     <div class="col-md-6">
@@ -306,11 +310,14 @@
                                     </div>
 
                                     <div class="col-md-6">
-                                        <select class="form-select" bind:value={newCandidate.source} required>
-                                            <option value="">Source</option>
-                                            <option value="recruiter">Recruiter</option>
-                                            <option value="referral">Referral</option>
-                                        </select>
+                                        <div class="select-wrapper">
+                                            <i class="bi bi-person-bounding-box select-icon"></i>
+                                            <select class="form-select ps-4" bind:value={newCandidate.source} required>
+                                                <option value="">&nbsp;&nbsp;Source</option>
+                                                <option value="recruiter">&nbsp;&nbsp;Recruiter</option>
+                                                <option value="referral">&nbsp;&nbsp;Referral</option>
+                                            </select>
+                                        </div>
                                     </div>
 
                                     <div class="col-md-6">
@@ -400,38 +407,36 @@
                             </div>
                         {:else}
                             {#each candidates as candidate}
-                                <div class="card mb-3">
+                                <div class="card mb-3" in:fade>
                                     <div class="card-body">
                                         <div class="d-flex justify-content-between align-items-start mb-3">
                                             <div>
-                                                <h5 class="card-title mb-0">{candidate.name}</h5>
+                                                <h5 class="card-title mb-1">{candidate.name}</h5>
                                                 <div class="mt-1">
-                                                    <div class="d-flex align-items-center text-muted">
+                                                    <div class="d-flex align-items-center text-muted small mb-1">
+                                                        <i class="bi bi-briefcase me-2"></i>
+                                                        <span>{getPositionTitle(candidate.positionId)}</span>
+                                                    </div>                                                    
+                                                    <div class="d-flex align-items-center text-muted small mb-1">
                                                         <i class="bi bi-envelope me-2"></i>
                                                         <span>{candidate.email}</span>
                                                     </div>
-                                                    <div class="d-flex align-items-center text-muted mt-1">
-                                                        <i class="bi bi-person-badge me-2"></i>
+                                                    <div class="d-flex align-items-center text-muted small mt-1">
+                                                        <i class="bi bi-person-bounding-box me-2"></i>
                                                         <span>{formatSource(candidate.source, candidate.sourceName)}</span>
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div>
-                                                <div class="d-flex align-items-center gap-3">
-                                                    <span class="text-muted">
-                                                        <i class="bi bi-briefcase me-1"></i>
-                                                        {getPositionTitle(candidate.positionId)}
-                                                    </span>
-                                                    <button 
-                                                        class="btn btn-outline-danger btn-sm"
-                                                        onclick={() => deleteCandidate(candidate.id)}
-                                                        title="Delete candidate"
-                                                        aria-label="Delete {candidate.name}"
-                                                    >
-                                                        <i class="bi bi-trash"></i>
-                                                    </button>
-                                                </div>
-                                                <div class="d-flex align-items-center justify-content-end gap-3 mt-2">
+                                            <div class="d-flex flex-column align-items-end">
+                                                <button 
+                                                    class="btn btn-outline-danger btn-sm"
+                                                    onclick={() => deleteCandidate(candidate.id)}
+                                                    title="Delete candidate"
+                                                    aria-label="Delete {candidate.name}"
+                                                >
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                                <div class="d-flex align-items-center gap-3 mt-2 d-none d-lg-flex">
                                                     <StageProgress candidate={candidate} />
                                                     <button 
                                                         class="btn btn-link p-0 text-muted fw-bold"
@@ -442,6 +447,16 @@
                                                     </button>
                                                 </div>
                                             </div>
+                                        </div>
+                                        <div class="d-flex justify-content-end align-items-center gap-3 mt-2 d-lg-none">
+                                            <StageProgress candidate={candidate} />
+                                            <button 
+                                                class="btn btn-link p-0 text-muted fw-bold"
+                                                onclick={() => showTimelines[candidate.id] = !showTimelines[candidate.id]}
+                                                aria-label="Toggle timeline"
+                                            >
+                                                <i class="bi bi-chevron-{showTimelines[candidate.id] ? 'up' : 'down'} fw-bold"></i>
+                                            </button>
                                         </div>
 
                                         {#if showTimelines[candidate.id]}
@@ -478,5 +493,23 @@
         100% {
             background-position: -200% 0;
         }
+    }
+
+    .select-wrapper {
+        position: relative;
+    }
+
+    .select-icon {
+        position: absolute;
+        left: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 1;
+        color: #6c757d;
+        pointer-events: none;
+    }
+
+    .select-wrapper select {
+        padding-left: 35px;
     }
 </style> 
