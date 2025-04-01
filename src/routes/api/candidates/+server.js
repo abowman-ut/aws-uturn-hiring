@@ -11,7 +11,7 @@ function validateCandidate(candidate) {
     if (!candidate.name) errors.push('Name is required');
     if (!candidate.email) errors.push('Email is required');
     if (!candidate.positionId) errors.push('Position ID is required');
-    if (!candidate.expectedPayRange) errors.push('Expected pay range is required');
+    if (!candidate.expectedSalary) errors.push('Expected salary is required');
     if (!candidate.source) errors.push('Source is required');
     if (!candidate.sourceName) errors.push('Source name is required');
     
@@ -20,13 +20,13 @@ function validateCandidate(candidate) {
         errors.push('Invalid email format');
     }
     
-    // Validate pay range
-    if (candidate.expectedPayRange) {
-        const { min, max, currency } = candidate.expectedPayRange;
-        if (!min || !max || !currency) {
-            errors.push('Pay range must include min, max, and currency');
-        } else if (min > max) {
-            errors.push('Minimum pay cannot be greater than maximum pay');
+    // Validate salary
+    if (candidate.expectedSalary) {
+        const { amount, currency } = candidate.expectedSalary;
+        if (!amount || !currency) {
+            errors.push('Salary must include amount and currency');
+        } else if (isNaN(amount) || amount <= 0) {
+            errors.push('Salary amount must be a positive number');
         }
     }
     

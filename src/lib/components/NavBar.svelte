@@ -59,7 +59,7 @@
 
 <style>
     .navbar {
-        background: #4361ee;
+        background: #0d6efd;
         box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         padding: 0.5rem 0;
     }
@@ -127,7 +127,7 @@
     @media (max-width: 767.98px) {
         .navbar-collapse {
             padding: 1rem 0;
-            background: #4361ee;
+            background: #0d6efd;
         }
         
         .nav-link {

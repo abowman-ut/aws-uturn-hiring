@@ -123,9 +123,12 @@
                 throw new Error(error.error || 'Failed to create position');
             }
 
-            positions = [...positions, await response.json()];
-            showAddForm = false;
+            // Reset form and hide it
             resetForm();
+            showAddForm = false;
+            
+            // Reload data to get the updated list
+            await loadData();
         } catch (error) {
             formError = error.message;
         } finally {
@@ -346,7 +349,6 @@
                                             class="form-control"
                                             bind:value={newPosition.payRange.min}
                                             placeholder="Min ($)"
-                                            required
                                         />
                                         <span class="input-group-text">to</span>
                                         <input 
@@ -354,7 +356,6 @@
                                             class="form-control"
                                             bind:value={newPosition.payRange.max}
                                             placeholder="Max ($)"
-                                            required
                                         />
                                     </div>
                                 </div>

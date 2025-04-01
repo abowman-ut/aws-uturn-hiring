@@ -51,18 +51,28 @@
             if (!candidatesRes.ok) throw new Error('Failed to load candidates');
 
             positions = await positionsRes.json();
-            const loadedCandidates = await candidatesRes.json();
-            
-            // Sort candidates by createdAt in descending order (newest first)
-            candidates = loadedCandidates.sort((a, b) => 
-                new Date(b.createdAt) - new Date(a.createdAt)
-            );
+            candidates = await candidatesRes.json();
         } catch (error) {
             console.error('Error loading data:', error);
         } finally {
             isLoading = false;
         }
     }
+
+    // Sort candidates by creation date (newest first)
+    $effect(() => {
+        if (candidates.length > 0) {
+            const currentCandidates = untrack(() => [...candidates]);
+            const sortedCandidates = currentCandidates.sort((a, b) => {
+                return new Date(b.createdAt) - new Date(a.createdAt);
+            });
+            
+            // Only update if the order has changed
+            if (JSON.stringify(candidates) !== JSON.stringify(sortedCandidates)) {
+                candidates = sortedCandidates;
+            }
+        }
+    });
 
     // Helper function to get position title
     function getPositionTitle(positionId) {
@@ -86,10 +96,19 @@
         formError = null;
 
         try {
+            // Create a copy of the candidate data and convert salary to number
+            const candidateData = {
+                ...newCandidate,
+                expectedSalary: {
+                    ...newCandidate.expectedSalary,
+                    amount: Number(newCandidate.expectedSalary.amount)
+                }
+            };
+
             const response = await fetch('/api/candidates', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(newCandidate)
+                body: JSON.stringify(candidateData)
             });
 
             if (!response.ok) {
@@ -97,9 +116,12 @@
                 throw new Error(error.error || 'Failed to create candidate');
             }
 
-            candidates = [await response.json(), ...candidates];
-            showAddForm = false;
+            // Reset form and hide it
             resetForm();
+            showAddForm = false;
+            
+            // Reload data to get the updated list
+            await loadData();
         } catch (error) {
             formError = error.message;
         } finally {
@@ -226,7 +248,6 @@
                                     class="form-control"
                                     bind:value={newCandidate.sourceName}
                                     placeholder="Source Contact"
-                                    required
                                 />
                             </div>
 
@@ -236,8 +257,7 @@
                                         type="number" 
                                         class="form-control"
                                         bind:value={newCandidate.expectedSalary.amount}
-                                        placeholder="Salary Ask ($)"
-                                        required
+                                        placeholder="Expected Pay ($)"
                                     />
                                 </div>
                             </div>
@@ -338,7 +358,6 @@
                                             class="form-control"
                                             bind:value={newCandidate.sourceName}
                                             placeholder="Source Contact"
-                                            required
                                         />
                                     </div>
 
@@ -348,8 +367,7 @@
                                                 type="number" 
                                                 class="form-control"
                                                 bind:value={newCandidate.expectedSalary.amount}
-                                                placeholder="Salary Ask ($)"
-                                                required
+                                                placeholder="Expected Pay ($)"
                                             />
                                         </div>
                                     </div>
