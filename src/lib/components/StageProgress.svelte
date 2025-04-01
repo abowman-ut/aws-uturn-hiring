@@ -34,8 +34,12 @@
 <div class="stage-progress">
     {#each STAGES as stage, index}
         <div class="stage {getStageClass(stage)}">
-            <i class="bi {stage.icon}"></i>
-            {#if index < STAGES.length - 1}
+            {#if getStageOutcome(stage.id) === 'reject'}
+                <i class="bi bi-x-circle"></i>
+            {:else}
+                <i class="bi {stage.icon}"></i>
+            {/if}
+            {#if index < STAGES.length - 1 && getStageOutcome(stage.id) !== 'reject'}
                 <div class="connector"></div>
             {/if}
         </div>

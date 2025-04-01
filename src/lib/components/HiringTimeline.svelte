@@ -226,9 +226,8 @@
                                     </span>
                                     <span class="date-time">
                                         <i class="bi bi-clock"></i>
-                                        {new Date(stage.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                                         {#if getStageDuration(stage.id) !== ''}
-                                            ({getStageDuration(stage.id)})
+                                            {getStageDuration(stage.id)}
                                         {/if}
                                     </span>
                                 {/if}
