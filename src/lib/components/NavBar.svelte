@@ -30,11 +30,13 @@
         </button>
 
         <div class="collapse navbar-collapse {isMenuOpen ? 'show' : ''}" id="navbarNav">
-            <ul class="navbar-nav ms-auto">
+            <ul class="navbar-nav me-auto">
                 {@render navItem('Positions', '/positions', 'bi bi-list-ul')}
                 {@render navItem('Candidates', '/candidates', 'bi bi-people')}
-                {@render navItem('Profile', '/profile', 'bi bi-person')}
+            </ul>
+            <ul class="navbar-nav">
                 {#if isDev}
+                    {@render navItem('Profile', '/profile', 'bi bi-person')}
                     {@render navItem('Tests', '/tests', 'bi bi-clipboard-check')}
                 {/if}
             </ul>
@@ -130,6 +132,19 @@
         
         .nav-link {
             padding: 0.625rem 0.75rem;
+        }
+
+        .navbar-nav {
+            width: 100%;
+        }
+
+        .navbar-nav .nav-item {
+            width: 100%;
+        }
+
+        .navbar-nav .nav-link {
+            width: 100%;
+            justify-content: flex-start;
         }
     }
 </style>

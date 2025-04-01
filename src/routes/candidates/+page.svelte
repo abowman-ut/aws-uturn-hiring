@@ -12,6 +12,7 @@
     let formError = $state(null);
     let showTimelines = $state({});  // Store visibility state for each candidate
     let isLoading = $state(true);  // Add loading state
+    let activeSalaryPopup = $state(null);  // Add state for salary popup
 
     // Form data
     let newCandidate = $state({
@@ -146,6 +147,25 @@
         candidates = candidates.map(c => 
             c.id === updatedCandidate.id ? updatedCandidate : c
         );
+    }
+
+    // Function to show salary popup
+    function showSalaryPopup(event, candidate) {
+        event.stopPropagation(); // Prevent event bubbling
+        activeSalaryPopup = candidate.id;
+        
+        // Hide popup when clicking outside
+        const handleClickOutside = (e) => {
+            if (!e.target.closest('.salary-popup')) {
+                activeSalaryPopup = null;
+                document.removeEventListener('click', handleClickOutside);
+            }
+        };
+        
+        // Add listener on next tick to avoid immediate trigger
+        setTimeout(() => {
+            document.addEventListener('click', handleClickOutside);
+        }, 0);
     }
 </script>
 
@@ -428,14 +448,28 @@
                                                 </div>
                                             </div>
                                             <div class="d-flex flex-column align-items-end">
-                                                <button 
-                                                    class="btn btn-outline-danger btn-sm"
-                                                    onclick={() => deleteCandidate(candidate.id)}
-                                                    title="Delete candidate"
-                                                    aria-label="Delete {candidate.name}"
-                                                >
-                                                    <i class="bi bi-trash"></i>
-                                                </button>
+                                                <div class="d-flex gap-2">
+                                                    <button 
+                                                        class="btn btn-outline-success btn-sm"
+                                                        onclick={(e) => showSalaryPopup(e, candidate)}
+                                                        aria-label="Show salary range"
+                                                    >
+                                                        <i class="bi bi-cash"></i>
+                                                    </button>
+                                                    {#if activeSalaryPopup === candidate.id}
+                                                        <div class="salary-popup position-absolute bg-dark text-white p-2 rounded" style="top: -40px; right: 0; z-index: 1000;">
+                                                            ${candidate.expectedPayRange?.min?.toLocaleString() || 0} - ${candidate.expectedPayRange?.max?.toLocaleString() || 0}
+                                                        </div>
+                                                    {/if}
+                                                    <button 
+                                                        class="btn btn-outline-danger btn-sm"
+                                                        onclick={() => deleteCandidate(candidate.id)}
+                                                        title="Delete candidate"
+                                                        aria-label="Delete {candidate.name}"
+                                                    >
+                                                        <i class="bi bi-trash"></i>
+                                                    </button>
+                                                </div>
                                                 <div class="d-flex align-items-center gap-3 mt-2 d-none d-lg-flex">
                                                     <StageProgress candidate={candidate} />
                                                     <button 
@@ -511,5 +545,10 @@
 
     .select-wrapper select {
         padding-left: 35px;
+    }
+
+    .salary-popup {
+        font-size: 0.875rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
     }
 </style> 

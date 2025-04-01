@@ -1,6 +1,6 @@
 <script>
     import { base } from '$app/paths';
-    import { onMount } from 'svelte';
+    import { onMount, onDestroy } from 'svelte';
     import { Chart, registerables } from 'chart.js';
     import { browser } from '$app/environment';
     Chart.register(...registerables);
@@ -8,9 +8,9 @@
     // Page state
     let title = 'Dashboard';
     let isLoading = $state(true);
+    let error = $state(null);
     let positions = $state([]);
     let candidates = $state([]);
-    let stats = $state({});
     
     // Chart instances
     let pipelineChart = $state(null);
@@ -20,10 +20,15 @@
     // Color constants
     const COLORS = {
         primary: '#4361ee',
+        primaryLight: '#d3dafb',
         success: '#2ecc71',
+        successLight: '#d3f9d8',
         warning: '#ffd43b',
+        warningLight: '#fff3e6',
         danger: '#e63946',
+        dangerLight: '#f8d7da',
         info: '#0ea5e9',
+        infoLight: '#e0f2fe',
         gray: {
             50: '#f8fafc',
             100: '#f1f5f9',
@@ -38,9 +43,36 @@
         }
     };
 
+    // Chart colors
+    const CHART_COLORS = [
+        COLORS.primary,
+        COLORS.success,
+        COLORS.warning,
+        COLORS.danger,
+        COLORS.info
+    ];
+
     // Set document title
     $effect(() => {
         document.title = title;
+    });
+
+    // Calculate stats using derived values
+    let stats = $derived({
+        openPositions: positions.filter(p => p.state === 'open').length,
+        activeInterviews: candidates.filter(c => {
+            const currentStage = c.stages?.[c.stages.length - 1];
+            return currentStage?.status === 'current' && ['culture_fit', 'interview'].includes(currentStage.id);
+        }).length,
+        hired: candidates.filter(c => c.status === 'hired').length,
+        avgDaysToHire: calculateAvgDaysToHire(candidates),
+        openPositionsCount: positions.filter(p => p.state === 'open').length,
+        onholdPositionsCount: positions.filter(p => p.state === 'onhold').length,
+        cancelledPositionsCount: positions.filter(p => p.state === 'cancelled').length,
+        filledPositionsCount: positions.filter(p => p.state === 'filled').length,
+        allCandidatesCount: candidates.length,
+        rejectedCandidatesCount: candidates.filter(c => c.status === 'rejected').length,
+        allPositionsCount: positions.length
     });
 
     // Load data
@@ -48,32 +80,31 @@
         if (!browser) return;
         
         try {
+            isLoading = true;
+            error = null;
             console.log('Loading data...');
             const [positionsRes, candidatesRes] = await Promise.all([
                 fetch('/api/positions'),
                 fetch('/api/candidates')
             ]);
             
+            if (!positionsRes.ok || !candidatesRes.ok) {
+                throw new Error('Failed to load dashboard data');
+            }
+            
             positions = await positionsRes.json();
             candidates = await candidatesRes.json();
-            
-            // Calculate stats
-            stats = {
-                openPositions: positions.filter(p => p.state === 'open').length,
-                activeInterviews: candidates.filter(c => ['CULTURE_FIT', 'INTERVIEW'].includes(c.stage)).length,
-                hired: candidates.filter(c => c.stage === 'HIRED').length,
-                avgDaysToHire: calculateAvgDaysToHire(candidates)
-            };
             
             isLoading = false;
         } catch (error) {
             console.error('Error loading data:', error);
+            error = 'Failed to load dashboard data. Please try again later.';
             isLoading = false;
         }
     });
 
     function calculateAvgDaysToHire(candidates) {
-        const hiredCandidates = candidates.filter(c => c.stage === 'HIRED');
+        const hiredCandidates = candidates.filter(c => c.status === 'hired');
         if (hiredCandidates.length === 0) return 0;
 
         const totalDays = hiredCandidates.reduce((sum, c) => {
@@ -119,10 +150,11 @@
                 initializeCharts();
             }
         });
+    });
 
-        return () => {
-            cleanupCharts();
-        };
+    // Cleanup on component destroy
+    onDestroy(() => {
+        cleanupCharts();
     });
 
     // Initialize charts with error handling and logging
@@ -131,9 +163,6 @@
         
         console.log('Attempting to initialize charts...');
         cleanupCharts();
-
-        // Small delay to ensure DOM is ready
-        await new Promise(resolve => setTimeout(resolve, 50));
 
         try {
             const pipelineCanvas = document.getElementById('pipelineChart');
@@ -160,12 +189,24 @@
                     datasets: [{
                         label: 'Candidates',
                         data: [
-                            candidates.filter(c => c.stage === 'CV_REVIEW').length,
-                            candidates.filter(c => c.stage === 'CULTURE_FIT').length,
-                            candidates.filter(c => c.stage === 'INTERVIEW').length,
-                            candidates.filter(c => c.stage === 'DECISION').length
+                            candidates.filter(c => {
+                                const currentStage = c.stages?.[c.stages.length - 1];
+                                return currentStage?.id === 'cv_review' && currentStage?.status === 'current';
+                            }).length,
+                            candidates.filter(c => {
+                                const currentStage = c.stages?.[c.stages.length - 1];
+                                return currentStage?.id === 'culture_fit' && currentStage?.status === 'current';
+                            }).length,
+                            candidates.filter(c => {
+                                const currentStage = c.stages?.[c.stages.length - 1];
+                                return currentStage?.id === 'interview' && currentStage?.status === 'current';
+                            }).length,
+                            candidates.filter(c => {
+                                const currentStage = c.stages?.[c.stages.length - 1];
+                                return currentStage?.id === 'decision' && currentStage?.status === 'current';
+                            }).length
                         ],
-                        backgroundColor: ['#60a5fa', '#34d399', '#fbbf24', '#f87171']
+                        backgroundColor: COLORS.warning
                     }]
                 },
                 options: {
@@ -175,6 +216,17 @@
                         legend: {
                             display: false
                         }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    },
+                    aria: {
+                        label: 'Candidates Pipeline Chart'
                     }
                 }
             });
@@ -191,12 +243,17 @@
                     labels: Object.keys(departmentCounts),
                     datasets: [{
                         data: Object.values(departmentCounts),
-                        backgroundColor: ['#60a5fa', '#34d399', '#fbbf24', '#f87171', '#a78bfa']
+                        backgroundColor: CHART_COLORS
                     }]
                 },
                 options: {
                     responsive: true,
-                    maintainAspectRatio: false
+                    maintainAspectRatio: true,
+                    aspectRatio: 1.25,
+                    cutout: '50%',
+                    aria: {
+                        label: 'Positions by Department Chart'
+                    }
                 }
             });
 
@@ -216,7 +273,14 @@
 {/snippet}
 
 <div class="page-container">
-    {#if isLoading}
+    {#if error}
+        <div class="content-card">
+            <div class="alert alert-danger">
+                <i class="bi bi-exclamation-circle-fill me-2"></i>
+                {error}
+            </div>
+        </div>
+    {:else if isLoading}
         <div class="content-card">
             <div class="skeleton-header">
                 <div class="skeleton-title"></div>
@@ -240,50 +304,118 @@
                 <div class="skeleton-chart"></div>
             </div>
         </div>
+    {:else if positions.length === 0 && candidates.length === 0}
+        <div class="content-card">
+            <div class="text-center text-muted py-5">
+                <i class="bi bi-graph-up display-4"></i>
+                <p class="mt-2">No data available yet</p>
+            </div>
+        </div>
     {:else}
         <div class="content-card">
-            <h1>Welcome to Uturn</h1>
-            <!-- <p>Your AWS-powered hiring platform</p> -->
+            <!-- <h1>Welcome to Uturn</h1> -->
             
             <!-- Stats Cards -->
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-icon" style="background: {COLORS.primary}">
-                        <i class="bi bi-briefcase"></i>
+            <div class="stats-grid" role="list">
+                <!-- Position Status Cards -->
+                <div class="stat-card" role="listitem">
+                    <div class="stat-icon" style="background: {COLORS.infoLight}">
+                        <i class="bi bi-list-ul" aria-hidden="true" style="color: {COLORS.info}; font-size: 2rem;"></i>
                     </div>
                     <div class="stat-content">
-                        <div class="stat-number">{stats.openPositions}</div>
+                        <div class="stat-label">All Positions</div>
+                        <div class="stat-number">{stats.allPositionsCount}</div>
+                    </div>
+                </div>
+
+                <div class="stat-card" role="listitem">
+                    <div class="stat-icon" style="background: {COLORS.primaryLight}">
+                        <i class="bi bi-circle-fill" aria-hidden="true" style="color: {COLORS.primary}; font-size: 1rem;"></i>
+                    </div>
+                    <div class="stat-content">
                         <div class="stat-label">Open Positions</div>
+                        <div class="stat-number">{stats.openPositionsCount}</div>
                     </div>
                 </div>
 
-                <div class="stat-card">
-                    <div class="stat-icon" style="background: {COLORS.warning}">
-                        <i class="bi bi-calendar-event"></i>
+                <div class="stat-card" role="listitem">
+                    <div class="stat-icon" style="background: {COLORS.warningLight}">
+                        <i class="bi bi-circle-fill" aria-hidden="true" style="color: {COLORS.warning}; font-size: 1rem;"></i>
                     </div>
                     <div class="stat-content">
+                        <div class="stat-label">On Hold</div>
+                        <div class="stat-number">{stats.onholdPositionsCount}</div>
+                    </div>
+                </div>
+
+                <div class="stat-card" role="listitem">
+                    <div class="stat-icon" style="background: {COLORS.successLight}">
+                        <i class="bi bi-circle-fill" aria-hidden="true" style="color: {COLORS.success}; font-size: 1rem;"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-label">Filled</div>
+                        <div class="stat-number">{stats.filledPositionsCount}</div>
+                    </div>
+                </div>
+
+                <div class="stat-card" role="listitem">
+                    <div class="stat-icon" style="background: {COLORS.dangerLight}">
+                        <i class="bi bi-circle-fill" aria-hidden="true" style="color: {COLORS.danger}; font-size: 1rem;"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-label">Cancelled</div>
+                        <div class="stat-number">{stats.cancelledPositionsCount}</div>
+                    </div>
+                </div>
+
+                <!-- Other Stats Cards -->
+                <div class="stat-card" role="listitem">
+                    <div class="stat-icon" style="background: {COLORS.infoLight}">
+                        <i class="bi bi-people" aria-hidden="true" style="color: {COLORS.info}; font-size: 2rem;"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-label">All Candidates</div>
+                        <div class="stat-number">{stats.allCandidatesCount}</div>
+                    </div>
+                </div>
+
+                <div class="stat-card" role="listitem">
+                    <div class="stat-icon" style="background: {COLORS.infoLight}">
+                        <i class="bi bi-clock" aria-hidden="true" style="color: {COLORS.info}; font-size: 2rem;"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-label">Avg to Hire</div>
+                        <div class="stat-number">{stats.avgDaysToHire}<span class="stat-label"> &nbsp; &nbsp; &nbsp; &nbsp;days</span></div>
+                    </div>
+                </div>
+
+                <div class="stat-card" role="listitem">
+                    <div class="stat-icon" style="background: {COLORS.warningLight}">
+                        <i class="bi bi-person-badge" aria-hidden="true" style="color: {COLORS.warning}; font-size: 2rem;"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-label">Interviewing</div>
                         <div class="stat-number">{stats.activeInterviews}</div>
-                        <div class="stat-label">Active Interviews</div>
                     </div>
                 </div>
 
-                <div class="stat-card">
-                    <div class="stat-icon" style="background: {COLORS.success}">
-                        <i class="bi bi-person-check"></i>
+                <div class="stat-card" role="listitem">
+                    <div class="stat-icon" style="background: {COLORS.successLight}">
+                        <i class="bi bi-person-badge" aria-hidden="true" style="color: {COLORS.success}; font-size: 2rem;"></i>
                     </div>
                     <div class="stat-content">
-                        <div class="stat-number">{stats.hired}</div>
                         <div class="stat-label">Hired</div>
+                        <div class="stat-number">{stats.hired}</div>
                     </div>
                 </div>
 
-                <div class="stat-card">
-                    <div class="stat-icon" style="background: {COLORS.info}">
-                        <i class="bi bi-clock"></i>
+                <div class="stat-card" role="listitem">
+                    <div class="stat-icon" style="background: {COLORS.dangerLight}">
+                        <i class="bi bi-person-badge" aria-hidden="true" style="color: {COLORS.danger}; font-size: 2rem;"></i>
                     </div>
                     <div class="stat-content">
-                        <div class="stat-number">{stats.avgDaysToHire}</div>
-                        <div class="stat-label">Avg Days to Hire</div>
+                        <div class="stat-label">Rejected</div>
+                        <div class="stat-number">{stats.rejectedCandidatesCount}</div>
                     </div>
                 </div>
             </div>
@@ -291,23 +423,18 @@
             <!-- Charts -->
             <div class="charts-grid">
                 <div class="chart-card">
-                    <h2>Candidates Pipeline (All Departments)</h2>
+                    <h2>Interview Stages: All Departments</h2>
                     <div class="chart-container">
-                        <canvas id="pipelineChart"></canvas>
+                        <canvas id="pipelineChart" aria-label="Candidates Pipeline Chart"></canvas>
                     </div>
                 </div>
 
                 <div class="chart-card">
                     <h2>Positions by Department</h2>
                     <div class="chart-container">
-                        <canvas id="departmentsChart"></canvas>
+                        <canvas id="departmentsChart" aria-label="Positions by Department Chart"></canvas>
                     </div>
                 </div>
-            </div>
-
-            <!-- Action Links -->
-            <div class="action-links">
-
             </div>
         </div>
     {/if}
@@ -315,7 +442,7 @@
 
 <style>
     .page-container {
-        max-width: 1200px;
+        max-width: 1400px;
         margin: 2rem auto;
         padding: 0 1rem;
     }
@@ -327,12 +454,12 @@
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
 
-    h1 {
+    /* h1 {
         color: #1e293b;
         font-size: 2rem;
         font-weight: 600;
         margin: 0 0 1rem;
-    }
+    } */
 
     h2 {
         color: #1e293b;
@@ -344,7 +471,7 @@
     /* Stats Grid */
     .stats-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        grid-template-columns: repeat(5, 1fr);
         gap: 1.5rem;
         margin-bottom: 2rem;
     }
@@ -369,9 +496,9 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 3rem;
-        height: 3rem;
-        border-radius: 10px;
+        width: 4rem;
+        height: 4rem;
+        border-radius: 12px;
         color: white;
         font-size: 1.25rem;
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
@@ -424,10 +551,11 @@
         width: 100%;
     }
 
-    /* Action Links */
-    .action-links {
-        display: grid;
-        gap: 1rem;
+    /* Add specific styles for departments chart */
+    .chart-card:last-child .chart-container {
+        min-height: 200px;
+        max-width: 300px;
+        margin: 0 auto;
     }
 
     /* Skeleton Loading Styles */
@@ -445,7 +573,6 @@
     }
 
     .skeleton-title {
-        composes: skeleton;
         height: 2.5rem;
         width: 60%;
         margin-bottom: 1rem;
@@ -456,7 +583,6 @@
     }
 
     .skeleton-subtitle {
-        composes: skeleton;
         height: 1rem;
         width: 40%;
         background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
@@ -524,7 +650,7 @@
         border-radius: 8px;
     }
 
-    @media (max-width: 1024px) {
+    @media (max-width: 1400px) {
         .charts-grid {
             grid-template-columns: 1fr;
         }
@@ -539,6 +665,16 @@
 
         .skeleton-charts {
             grid-template-columns: 1fr;
+        }
+
+        .stats-grid {
+            grid-template-columns: repeat(3, 1fr);
+        }
+    }
+
+    @media (max-width: 768px) {
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
         }
     }
 
@@ -560,5 +696,24 @@
         .stat-number {
             font-size: 1.5rem;
         }
+
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .alert {
+        display: flex;
+        align-items: center;
+        padding: 1rem;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+        font-size: 0.875rem;
+    }
+
+    .alert-danger {
+        background: #fee2e2;
+        color: #991b1b;
+        border: 1px solid #fca5a5;
     }
 </style>
