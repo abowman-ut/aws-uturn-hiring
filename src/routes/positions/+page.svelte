@@ -13,6 +13,11 @@
     let formSuccess = $state(null);
     let window = $state({ innerWidth: 0 });
     let isLoading = $state(true);
+    let selectedFilter = $state('all');
+    let selectedTimeline = $state('All');
+    let selectedDepartment = $state('All');
+    let showFilters = $state(false);
+    let searchQuery = $state('');
 
     // Form data
     let newPosition = $state({
@@ -28,14 +33,16 @@
     });
 
     const DEPARTMENTS = ['Engineering', 'Management', 'Sales'];
-    const TIMELINES = ['Q1', 'Q2', 'Q3', 'Q4'];
+    const DEPARTMENT_OPTIONS = ['All', ...DEPARTMENTS];
+    const TIMELINES = ['All', 'Q1', 'Q2', 'Q3', 'Q4'];
 
     // Update state options
     const STATES = {
-        'open': { label: 'Open', class: 'text-primary' },
-        'on_hold': { label: 'On Hold', class: 'text-warning' },
-        'cancelled': { label: 'Cancelled', class: 'text-danger' },
-        'filled': { label: 'Filled', class: 'text-success' }
+        'all': { label: 'All', class: 'text-secondary', icon: 'bi-grid', bgClass: 'bg-light-secondary' },
+        'open': { label: 'Open', class: 'text-primary', icon: 'bi-circle-fill', bgClass: 'bg-light-primary' },
+        'on_hold': { label: 'On Hold', class: 'text-warning', icon: 'bi-pause-circle-fill', bgClass: 'bg-light-warning' },
+        'cancelled': { label: 'Cancelled', class: 'text-danger', icon: 'bi-x-circle-fill', bgClass: 'bg-light-danger' },
+        'filled': { label: 'Filled', class: 'text-success', icon: 'bi-check-circle-fill', bgClass: 'bg-light-success' }
     };
 
     // Add state for salary popup
@@ -103,7 +110,34 @@
 
     // Helper function to get filtered positions
     function getFilteredPositions() {
-        return positions;
+        let filtered = positions;
+        
+        // Filter by state
+        if (selectedFilter !== 'all') {
+            filtered = filtered.filter(position => position.state === selectedFilter);
+        }
+        
+        // Filter by timeline
+        if (selectedTimeline !== 'All') {
+            filtered = filtered.filter(position => position.timeline === selectedTimeline);
+        }
+
+        // Filter by department
+        if (selectedDepartment !== 'All') {
+            filtered = filtered.filter(position => position.department === selectedDepartment);
+        }
+
+        // Filter by search query
+        if (searchQuery.trim()) {
+            const query = searchQuery.toLowerCase().trim();
+            filtered = filtered.filter(position => 
+                position.title.toLowerCase().includes(query) ||
+                position.department.toLowerCase().includes(query) ||
+                position.hiringManager.toLowerCase().includes(query)
+            );
+        }
+        
+        return filtered;
     }
 
     async function handleSubmit(e) {
@@ -270,22 +304,50 @@
             }
         }
     });
+
+    function toggleFilters() {
+        showFilters = !showFilters;
+    }
 </script>
 
 <div class="container-fluid py-3">
     <div class="row">
-        <!-- Add Position Button (visible on mobile) -->
+        <!-- Add Position Button and Filter (visible on mobile) -->
         <div class="col-12 d-lg-none mb-3">
-            <div class="d-flex justify-content-end">
-                <button 
-                    type="button" 
-                    class="btn btn-primary d-inline-flex align-items-center" 
-                    onclick={() => showAddForm = !showAddForm}
-                    disabled={showAddForm}
-                >
-                    <i class="bi bi-{showAddForm ? 'dash' : 'plus'}-circle me-2"></i>
-                    Add Position
-                </button>
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center">
+                    <div class="btn-group" role="group" aria-label="Position filters">
+                        {#each Object.entries(STATES) as [state, { label, class: className, icon }]}
+                            <button 
+                                type="button" 
+                                class="btn btn-outline-secondary {selectedFilter === state ? 'active' : ''}"
+                                onclick={() => selectedFilter = state}
+                                title={label}
+                            >
+                                <i class="bi {icon} {className}"></i>
+                                <span class="ms-1 d-none d-sm-inline">{label}</span>
+                            </button>
+                        {/each}
+                    </div>
+                </div>
+                <div class="d-flex flex-column align-items-end">
+                    <button 
+                        type="button" 
+                        class="btn btn-primary d-inline-flex align-items-center" 
+                        onclick={() => showAddForm = !showAddForm}
+                        disabled={showAddForm}
+                    >
+                        <i class="bi bi-{showAddForm ? 'dash' : 'plus'}-circle"></i>
+                        <span class="ms-2 d-none d-sm-inline">Add Position</span>
+                    </button>
+                    
+                    <!-- Position count - only shown when filters are visible -->
+                    {#if showFilters}
+                        <div class="d-flex align-items-center text-muted small text-end mt-3" transition:slide={{ duration: 200 }}>
+                            Showing {getFilteredPositions().length} of {positions.length} positions
+                        </div>
+                    {/if}
+                </div>
             </div>
         </div>
 
@@ -312,7 +374,7 @@
                                         <i class="bi bi-building select-icon"></i>
                                         <select class="form-select ps-4" id="department" bind:value={newPosition.department} required>
                                             <option value="">&nbsp;&nbsp;Select department</option>
-                                            {#each DEPARTMENTS as department}
+                                            {#each DEPARTMENT_OPTIONS as department}
                                                 <option value={department}>&nbsp;&nbsp;{department}</option>
                                             {/each}
                                         </select>
@@ -332,7 +394,7 @@
 
                                 <div class="col-12">
                                     <div class="select-wrapper">
-                                        <i class="bi bi-calendar select-icon"></i>
+                                        <i class="bi bi-calendar3 select-icon"></i>
                                         <select class="form-select ps-4" id="timeline" bind:value={newPosition.timeline} required>
                                             <option value="">&nbsp;&nbsp;Select timeline</option>
                                             {#each TIMELINES as timeline}
@@ -390,6 +452,120 @@
         <div class="col">
             <div class="card">
                 <div class="card-body">
+                    <!-- Desktop Filter and Add Position Button -->
+                    <div class="d-none d-lg-flex justify-content-between align-items-start mb-4">
+                        <div class="d-flex flex-column gap-2">
+                            <div class="d-flex align-items-center">
+                                <button 
+                                    type="button" 
+                                    class="btn btn-outline-secondary me-2"
+                                    title="Filters"
+                                    onclick={toggleFilters}
+                                >
+                                    <span>Filters</span>
+                                    <i class="bi bi-chevron-{showFilters ? 'up' : 'down'} ms-1"></i>
+                                </button>
+                                <div class="btn-group" role="group" aria-label="Position filters">
+                                    {#each Object.entries(STATES) as [state, { label, class: className, icon, bgClass }]}
+                                        <button 
+                                            type="button" 
+                                            class="btn btn-outline-secondary {selectedFilter === state ? `active ${bgClass}` : ''}"
+                                            onclick={() => selectedFilter = state}
+                                            title={label}
+                                        >
+                                            <i class="bi {icon} {className}"></i>
+                                            <span class="ms-1 text-secondary">{label}</span>
+                                        </button>
+                                    {/each}
+                                </div>
+                            </div>
+
+                            {#if showFilters}
+                                <div class="d-flex gap-2" transition:slide={{ duration: 200 }}>
+                                    <!-- Department filter dropdown -->
+                                    <div class="dropdown">
+                                        <button 
+                                            class="btn btn-sm btn-outline-secondary dropdown-toggle d-flex align-items-center gap-2 {selectedDepartment !== 'All' ? 'active' : ''}" 
+                                            type="button" 
+                                            data-bs-toggle="dropdown" 
+                                            aria-expanded="false"
+                                        >
+                                            <i class="bi bi-building"></i>
+                                            <span>{selectedDepartment === 'All' ? 'Department' : selectedDepartment}</span>
+                                        </button>
+                                        <ul class="dropdown-menu">
+                                            {#each DEPARTMENT_OPTIONS as department}
+                                                <li>
+                                                    <button 
+                                                        class="dropdown-item {selectedDepartment === department ? 'active' : ''}" 
+                                                        onclick={() => selectedDepartment = department}
+                                                    >
+                                                        {department}
+                                                    </button>
+                                                </li>
+                                            {/each}
+                                        </ul>
+                                    </div>
+
+                                    <!-- Timeline filter dropdown -->
+                                    <div class="dropdown">
+                                        <button 
+                                            class="btn btn-sm btn-outline-secondary dropdown-toggle d-flex align-items-center gap-2 {selectedTimeline !== 'All' ? 'active' : ''}" 
+                                            type="button" 
+                                            data-bs-toggle="dropdown" 
+                                            aria-expanded="false"
+                                        >
+                                            <i class="bi bi-calendar3"></i>
+                                            <span>{selectedTimeline === 'All' ? 'Timeline' : selectedTimeline}</span>
+                                        </button>
+                                        <ul class="dropdown-menu">
+                                            {#each TIMELINES as timeline}
+                                                <li>
+                                                    <button 
+                                                        class="dropdown-item {selectedTimeline === timeline ? 'active' : ''}" 
+                                                        onclick={() => selectedTimeline = timeline}
+                                                    >
+                                                        {timeline}
+                                                    </button>
+                                                </li>
+                                            {/each}
+                                        </ul>
+                                    </div>
+
+                                    <!-- Search bar -->
+                                    <div class="position-relative search-container">
+                                        <input
+                                            type="text"
+                                            class="form-control form-control-sm pe-4"
+                                            placeholder=""
+                                            bind:value={searchQuery}
+                                        />
+                                        <i class="bi bi-search position-absolute top-50 translate-middle-y end-0 me-2 text-gray-500" style="font-size: 0.75rem;"></i>
+                                    </div>
+                                </div>
+                            {/if}
+                        </div>
+
+                        <div class="d-flex flex-column align-items-end">
+                            <button 
+                                type="button" 
+                                class="btn btn-primary d-inline-flex align-items-center" 
+                                onclick={() => showAddForm = !showAddForm}
+                                disabled={showAddForm}
+                            >
+                                <i class="bi bi-{showAddForm ? 'dash' : 'plus'}-circle"></i>
+                                <span class="ms-2 d-none d-sm-inline">Add Position</span>
+                            </button>
+                            
+                            <!-- Position count - only shown when filters are visible -->
+                            {#if showFilters}
+                                <div class="d-flex align-items-center text-muted small text-end mt-3" transition:slide={{ duration: 200 }}>
+                                    Showing {getFilteredPositions().length} of {positions.length} positions
+                                </div>
+                            {/if}
+                        </div>
+                    </div>
+
                     <!-- Positions List -->
                     <div class="positions-list">
                         {#if isLoading}
@@ -417,7 +593,7 @@
                                 <p class="mt-2">No positions found</p>
                             </div>
                         {:else}
-                            {#each positions as position}
+                            {#each getFilteredPositions() as position}
                                 <div class="card mb-3" in:fade>
                                     <div class="card-body">
                                         <div class="d-flex justify-content-between align-items-start">
@@ -483,7 +659,7 @@
                                                 
                                                 {#if activeStatusMenu === position.id}
                                                     <div class="status-menu position-absolute bg-white border rounded shadow-sm py-1" style="top: 100%; left: 0; z-index: 1000; min-width: 120px; margin-top: 4px;">
-                                                        {#each Object.entries(STATES) as [state, { label, class: className }]}
+                                                        {#each Object.entries(STATES).filter(([key]) => key !== 'all') as [state, { label, class: className }]}
                                                             <button 
                                                                 class="btn btn-link btn-sm w-100 text-start text-decoration-none {className}"
                                                                 onclick={() => updatePositionState(position, state)}
@@ -579,5 +755,114 @@
 
     .status-menu button:hover {
         background-color: #f8f9fa;
+    }
+
+    .btn-group .btn {
+        border-radius: 0;
+        transition: all 0.2s ease;
+    }
+
+    .btn-group .btn:first-child {
+        border-top-left-radius: 0.375rem;
+        border-bottom-left-radius: 0.375rem;
+    }
+
+    .btn-group .btn:last-child {
+        border-top-right-radius: 0.375rem;
+        border-bottom-right-radius: 0.375rem;
+    }
+
+    .btn-group .btn.active {
+        background-color: transparent;
+    }
+
+    .btn-group .btn.active.bg-light-primary {
+        background-color: rgba(13, 110, 253, 0.1);
+    }
+
+    .btn-group .btn.active.bg-light-secondary {
+        background-color: rgba(108, 117, 125, 0.1);
+    }
+
+    .btn-group .btn.active.bg-light-success {
+        background-color: rgba(25, 135, 84, 0.1);
+    }
+
+    .btn-group .btn.active.bg-light-danger {
+        background-color: rgba(220, 53, 69, 0.1);
+    }
+
+    .btn-group .btn.active.bg-light-warning {
+        background-color: rgba(255, 193, 7, 0.1);
+    }
+
+    .btn-group .btn i {
+        font-size: 0.875rem;
+    }
+
+    .btn-group .btn.active .text-secondary {
+        color: #6c757d !important;
+    }
+
+    .btn-group .btn:hover {
+        background-color: rgba(108, 117, 125, 0.05);
+    }
+
+    /* Add these styles to match the screenshot */
+    .dropdown-toggle::after {
+        margin-left: 0.5rem;
+    }
+    
+    .dropdown-menu {
+        min-width: 8rem;
+    }
+    
+    .dropdown-item.active {
+        background-color: var(--bs-primary);
+        color: white;
+    }
+    
+    .btn-group .btn.selected {
+        background-color: var(--bs-light);
+        border-color: var(--bs-gray-300);
+    }
+
+    /* Update hover states for filter buttons */
+    .btn-outline-secondary:hover {
+        background-color: rgba(108, 117, 125, 0.04) !important;
+        color: #6c757d;
+    }
+
+    /* Specific hover state for dropdown buttons */
+    .dropdown .btn-outline-secondary:hover,
+    /* .dropdown .btn-outline-secondary[aria-expanded="true"], */
+    .dropdown .btn-outline-secondary.active {
+        background-color: rgba(108, 117, 125, 0.04) !important;
+        color: #6c757d;
+    }
+
+    /* Keep dropdown items hover state */
+    .dropdown-item:hover {
+        background-color: rgba(13, 110, 253, 0.04);
+        color: inherit;
+    }
+
+    /* Update search bar styles */
+    .search-container {
+        flex: 1;
+        max-width: 300px;
+    }
+
+    .search-container input {
+        border: 1px solid #6c757d;
+    }
+
+    .search-container input:focus {
+        border-color: #6c757d;
+        box-shadow: 0 0 0 0.2rem rgba(108, 117, 125, 0.15);
+    }
+
+    .text-gray-500 {
+        color: #adb5bd !important;
     }
 </style> 
