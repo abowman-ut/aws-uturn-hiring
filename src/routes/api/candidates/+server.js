@@ -34,6 +34,16 @@ function validateCandidate(candidate) {
     if (candidate.source && !['recruiter', 'referral'].includes(candidate.source)) {
         errors.push('Source must be either "recruiter" or "referral"');
     }
+
+    // Validate resume if provided
+    if (candidate.resume) {
+        if (!candidate.resume.url) {
+            errors.push('Resume URL is required if resume is provided');
+        }
+        if (!candidate.resume.filename) {
+            errors.push('Resume filename is required if resume is provided');
+        }
+    }
     
     return errors;
 }
@@ -91,6 +101,11 @@ export async function POST({ request }) {
 
         // Initialize stages array with the initial stage
         candidate.stages = [getInitialStage()];
+
+        // Initialize resume if not provided
+        if (!candidate.resume) {
+            candidate.resume = null;
+        }
         
         await dynamoOperation(PutCommand, {
             tableName: CANDIDATES_TABLE,

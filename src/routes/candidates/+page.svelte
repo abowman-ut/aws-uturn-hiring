@@ -19,6 +19,9 @@
     let selectedDepartment = $state('All');
     let selectedSource = $state('All');
     let searchQuery = $state('');
+    let resumeViewUrl = $state(null);  // Add state for resume view URL
+    let showResumeViewer = $state(false);  // Add state for resume viewer
+    let currentResume = $state(null);  // Add state for current resume being viewed
 
     // Form data
     let newCandidate = $state({
@@ -31,8 +34,14 @@
             currency: 'USD'
         },
         source: '',
-        sourceName: ''
+        sourceName: '',
+        resume: null
     });
+
+    // Add state for resume upload
+    let resumeFile = $state(null);
+    let isUploading = $state(false);
+    let uploadError = $state(null);
 
     const STAGES = [
         { id: 'cv_review', name: 'CV Review', icon: 'bi-file-text' },
@@ -207,7 +216,8 @@
             positionId: '',
             expectedSalary: { amount: '', currency: 'USD' },
             source: '',
-            sourceName: ''
+            sourceName: '',
+            resume: null
         };
         showAddForm = false;
     }
@@ -235,6 +245,105 @@
         setTimeout(() => {
             document.addEventListener('click', handleClickOutside);
         }, 0);
+    }
+
+    async function handleResumeUpload(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        resumeFile = file;
+        isUploading = true;
+        uploadError = null;
+
+        try {
+            // Get presigned URL for upload
+            const response = await fetch('/api/candidates/resume', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    filename: file.name,
+                    contentType: file.type
+                })
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || 'Failed to get upload URL');
+            }
+
+            const { uploadUrl, fileUrl, key } = await response.json();
+
+            // Upload file to S3 with proper headers
+            const uploadResponse = await fetch(uploadUrl, {
+                method: 'PUT',
+                body: file,
+                headers: {
+                    'Content-Type': file.type
+                }
+            });
+
+            if (!uploadResponse.ok) {
+                const errorText = await uploadResponse.text();
+                console.error('Upload error details:', errorText);
+                throw new Error(`Upload failed with status: ${uploadResponse.status}`);
+            }
+
+            // Update candidate with resume info
+            newCandidate.resume = {
+                url: fileUrl,
+                filename: file.name,
+                key: key  // Store the key for later use
+            };
+
+            isUploading = false;
+        } catch (error) {
+            console.error('Error uploading resume:', error);
+            uploadError = error.message || 'Failed to upload resume. Please try again.';
+            isUploading = false;
+        }
+    }
+
+    async function getResumeUrl(key) {
+        try {
+            const response = await fetch(`/api/candidates/resume?key=${encodeURIComponent(key)}`);
+            if (!response.ok) {
+                throw new Error('Failed to get resume URL');
+            }
+            const { url } = await response.json();
+            resumeViewUrl = url;
+            return url;
+        } catch (error) {
+            console.error('Error getting resume URL:', error);
+            return null;
+        }
+    }
+
+    async function handleResumeClick(event, candidate) {
+        event.preventDefault();
+        if (!candidate.resume?.key) {
+            console.error('No resume key found for candidate:', candidate);
+            return;
+        }
+        
+        const response = await fetch(`/api/candidates/resume?key=${encodeURIComponent(candidate.resume.key)}`);
+        if (!response.ok) {
+            console.error('Failed to get resume URL');
+            return;
+        }
+        const { url, filename, contentType } = await response.json();
+        
+        currentResume = {
+            url,
+            filename,
+            contentType,
+            candidateName: candidate.name
+        };
+        showResumeViewer = true;
+    }
+
+    function closeResumeViewer() {
+        showResumeViewer = false;
+        currentResume = null;
     }
 </script>
 
@@ -354,6 +463,43 @@
                                 </div>
 
                                 <div class="col-12">
+                                    <div class="input-group">
+                                        <label for="resume-upload" class="input-group-text py-0">
+                                            <i class="bi bi-file-text"></i>
+                                        </label>
+                                        <input 
+                                            id="resume-upload"
+                                            type="file" 
+                                            class="form-control" 
+                                            accept=".pdf,.doc,.docx"
+                                            onchange={(e) => {
+                                                const file = e.target.files[0];
+                                                if (file) {
+                                                    e.target.dataset.filename = file.name;
+                                                } else {
+                                                    delete e.target.dataset.filename;
+                                                }
+                                                handleResumeUpload(e);
+                                            }}
+                                            disabled={isUploading}
+                                        />
+                                        {#if isUploading}
+                                            <span class="input-group-text text-info py-0">
+                                                <i class="bi bi-arrow-repeat small spinning"></i>
+                                            </span>
+                                        {:else if uploadError}
+                                            <span class="input-group-text text-danger py-0">
+                                                <i class="bi bi-exclamation-circle small"></i>
+                                            </span>
+                                        {:else if newCandidate.resume}
+                                            <span class="input-group-text text-success py-0">
+                                                <i class="bi bi-check-circle small"></i>
+                                            </span>
+                                        {/if}
+                                    </div>
+                                </div>
+
+                                <div class="col-12">
                                     <div class="d-flex justify-content-end gap-2">
                                         <button type="button" class="btn btn-secondary" style="width: 100px;" onclick={() => { resetForm(); showAddForm = false; }}>
                                             Cancel
@@ -445,6 +591,43 @@
                                         bind:value={newCandidate.expectedSalary.amount}
                                         placeholder="Expected Pay ($)"
                                     />
+                                </div>
+                            </div>
+
+                            <div class="col-12">
+                                <div class="input-group">
+                                    <label for="resume-upload-desktop" class="input-group-text py-0">
+                                        <i class="bi bi-file-text"></i>
+                                    </label>
+                                    <input 
+                                        id="resume-upload-desktop"
+                                        type="file" 
+                                        class="form-control" 
+                                        accept=".pdf,.doc,.docx"
+                                        onchange={(e) => {
+                                            const file = e.target.files[0];
+                                            if (file) {
+                                                e.target.dataset.filename = file.name;
+                                            } else {
+                                                delete e.target.dataset.filename;
+                                            }
+                                            handleResumeUpload(e);
+                                        }}
+                                        disabled={isUploading}
+                                    />
+                                    {#if isUploading}
+                                        <span class="input-group-text text-info py-0">
+                                            <i class="bi bi-arrow-repeat small spinning"></i>
+                                        </span>
+                                    {:else if uploadError}
+                                        <span class="input-group-text text-danger py-0">
+                                            <i class="bi bi-exclamation-circle small"></i>
+                                        </span>
+                                    {:else if newCandidate.resume}
+                                        <span class="input-group-text text-success py-0">
+                                            <i class="bi bi-check-circle small"></i>
+                                        </span>
+                                    {/if}
                                 </div>
                             </div>
 
@@ -688,6 +871,16 @@
                                                             ${candidate.expectedSalary?.amount?.toLocaleString() || 0}
                                                         </div>
                                                     {/if}
+                                                    {#if candidate.resume}
+                                                        <button 
+                                                            class="btn btn-outline-primary btn-sm"
+                                                            onclick={(e) => handleResumeClick(e, candidate)}
+                                                            title="View Resume"
+                                                            aria-label="View resume for {candidate.name}"
+                                                        >
+                                                            <i class="bi bi-file-text"></i>
+                                                        </button>
+                                                    {/if}
                                                     <button 
                                                         class="btn btn-outline-danger btn-sm"
                                                         onclick={() => deleteCandidate(candidate.id)}
@@ -737,6 +930,81 @@
         </div>
     </div>
 </div>
+
+{#if showResumeViewer}
+    <div class="resume-viewer-overlay" transition:fade={{ duration: 200 }}>
+        <div class="resume-viewer" transition:slide={{ duration: 300 }}>
+            <div class="resume-viewer-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-file-text me-2"></i>
+                    Resume for {currentResume.candidateName}
+                </h5>
+                <div class="d-flex gap-2">
+                    <a 
+                        href={currentResume.url} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        class="btn btn-sm btn-outline-primary"
+                        title="Download resume"
+                    >
+                        <i class="bi bi-download me-1"></i>
+                        Download
+                    </a>
+                    <button 
+                        class="btn-close" 
+                        onclick={closeResumeViewer}
+                        aria-label="Close resume viewer"
+                    ></button>
+                </div>
+            </div>
+            <div class="resume-viewer-content">
+                {#if currentResume.contentType === 'application/pdf'}
+                    <embed 
+                        src={currentResume.url} 
+                        type="application/pdf"
+                        width="100%"
+                        height="100%"
+                    />
+                {:else if currentResume.contentType.includes('word') || currentResume.contentType.includes('docx')}
+                    <div class="resume-preview-container">
+                        <div class="alert alert-info mb-3">
+                            <i class="bi bi-info-circle me-2"></i>
+                            Word documents can be viewed using Microsoft Office Online or Google Docs.
+                        </div>
+                        <div class="d-flex gap-3 justify-content-center">
+                            <a 
+                                href={`https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(currentResume.url)}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="btn btn-outline-primary"
+                            >
+                                <i class="bi bi-microsoft me-2"></i>
+                                View in Office Online
+                            </a>
+                            <a 
+                                href={`https://docs.google.com/viewer?url=${encodeURIComponent(currentResume.url)}&embedded=true`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="btn btn-outline-primary"
+                            >
+                                <i class="bi bi-google me-2"></i>
+                                View in Google Docs
+                            </a>
+                        </div>
+                    </div>
+                {:else}
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle me-2"></i>
+                        This file type cannot be previewed. 
+                        <a href={currentResume.url} target="_blank" rel="noopener noreferrer">
+                            Click here to download
+                        </a>
+                    </div>
+                {/if}
+            </div>
+        </div>
+    </div>
+{/if}
 
 <style>
     .skeleton-line {
@@ -881,5 +1149,119 @@
 
     .text-gray-500 {
         color: #adb5bd !important;
+    }
+
+    .resume-viewer-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 1050;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .resume-viewer {
+        background: white;
+        border-radius: 0.5rem;
+        width: 90%;
+        max-width: 1000px;
+        height: 90vh;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    }
+
+    .resume-viewer-header {
+        padding: 1rem;
+        border-bottom: 1px solid #dee2e6;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .resume-viewer-content {
+        flex: 1;
+        padding: 1rem;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .resume-viewer-content embed {
+        flex: 1;
+        border: none;
+    }
+
+    .resume-preview-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        padding: 2rem;
+    }
+
+    .resume-preview-container .btn {
+        min-width: 200px;
+    }
+
+    /* Add a nice hover effect to the resume button */
+    .btn-outline-primary:hover {
+        background-color: rgba(13, 110, 253, 0.1);
+    }
+
+    @keyframes spin {
+        from {
+            transform: rotate(0deg);
+        }
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    .spinning {
+        animation: spin 1s linear infinite;
+    }
+
+    /* File input styling */
+    input[type="file"] {
+        padding: 0.375rem 0.75rem;
+        display: flex;
+        align-items: center;
+        height: calc(1.5em + 0.75rem + 2px);
+    }
+
+    input[type="file"]::-webkit-file-upload-button {
+        display: none;
+    }
+
+    input[type="file"]::before {
+        content: attr(data-filename);
+        display: inline-block;
+        color: #adb5bd;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 200px;
+        line-height: 1.5;
+        height: 100%;
+        display: flex;
+        align-items: center;
+    }
+
+    input[type="file"]:hover::before {
+        color: #6c757d;
+    }
+
+    input[type="file"]:disabled::before {
+        color: #dee2e6;
+    }
+
+    input[type="file"]:not([data-filename])::before {
+        content: 'Choose file';
     }
 </style> 
