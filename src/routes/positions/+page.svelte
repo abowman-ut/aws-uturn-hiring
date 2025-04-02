@@ -54,6 +54,9 @@
     // Add state for candidate counts
     let candidateCounts = $state({});
 
+    // Add state for dropdowns
+    let activeDropdown = $state(null);
+
     // Load data and candidate counts when component mounts
     $effect(() => {
         loadData();
@@ -308,6 +311,21 @@
     function toggleFilters() {
         showFilters = !showFilters;
     }
+
+    // Function to handle dropdown selection
+    function handleDropdownSelect(dropdown, value) {
+        if (dropdown === 'department') {
+            selectedDepartment = value;
+        } else if (dropdown === 'timeline') {
+            selectedTimeline = value;
+        }
+        activeDropdown = null; // Close the dropdown
+    }
+
+    // Function to toggle dropdown
+    function toggleDropdown(dropdown) {
+        activeDropdown = activeDropdown === dropdown ? null : dropdown;
+    }
 </script>
 
 <div class="container-fluid py-3">
@@ -487,24 +505,26 @@
                                         <button 
                                             class="btn btn-sm btn-outline-secondary dropdown-toggle d-flex align-items-center gap-2 {selectedDepartment !== 'All' ? 'active' : ''}" 
                                             type="button" 
-                                            data-bs-toggle="dropdown" 
-                                            aria-expanded="false"
+                                            onclick={() => toggleDropdown('department')}
+                                            aria-expanded={activeDropdown === 'department'}
                                         >
                                             <i class="bi bi-building"></i>
                                             <span>{selectedDepartment === 'All' ? 'Department' : selectedDepartment}</span>
                                         </button>
-                                        <ul class="dropdown-menu">
-                                            {#each DEPARTMENT_OPTIONS as department}
-                                                <li>
-                                                    <button 
-                                                        class="dropdown-item {selectedDepartment === department ? 'active' : ''}" 
-                                                        onclick={() => selectedDepartment = department}
-                                                    >
-                                                        {department}
-                                                    </button>
-                                                </li>
-                                            {/each}
-                                        </ul>
+                                        {#if activeDropdown === 'department'}
+                                            <ul class="dropdown-menu show">
+                                                {#each DEPARTMENT_OPTIONS as department}
+                                                    <li>
+                                                        <button 
+                                                            class="dropdown-item {selectedDepartment === department ? 'active' : ''}" 
+                                                            onclick={() => handleDropdownSelect('department', department)}
+                                                        >
+                                                            {department}
+                                                        </button>
+                                                    </li>
+                                                {/each}
+                                            </ul>
+                                        {/if}
                                     </div>
 
                                     <!-- Timeline filter dropdown -->
@@ -512,24 +532,26 @@
                                         <button 
                                             class="btn btn-sm btn-outline-secondary dropdown-toggle d-flex align-items-center gap-2 {selectedTimeline !== 'All' ? 'active' : ''}" 
                                             type="button" 
-                                            data-bs-toggle="dropdown" 
-                                            aria-expanded="false"
+                                            onclick={() => toggleDropdown('timeline')}
+                                            aria-expanded={activeDropdown === 'timeline'}
                                         >
                                             <i class="bi bi-calendar3"></i>
                                             <span>{selectedTimeline === 'All' ? 'Timeline' : selectedTimeline}</span>
                                         </button>
-                                        <ul class="dropdown-menu">
-                                            {#each TIMELINES as timeline}
-                                                <li>
-                                                    <button 
-                                                        class="dropdown-item {selectedTimeline === timeline ? 'active' : ''}" 
-                                                        onclick={() => selectedTimeline = timeline}
-                                                    >
-                                                        {timeline}
-                                                    </button>
-                                                </li>
-                                            {/each}
-                                        </ul>
+                                        {#if activeDropdown === 'timeline'}
+                                            <ul class="dropdown-menu show">
+                                                {#each TIMELINES as timeline}
+                                                    <li>
+                                                        <button 
+                                                            class="dropdown-item {selectedTimeline === timeline ? 'active' : ''}" 
+                                                            onclick={() => handleDropdownSelect('timeline', timeline)}
+                                                        >
+                                                            {timeline}
+                                                        </button>
+                                                    </li>
+                                                {/each}
+                                            </ul>
+                                        {/if}
                                     </div>
 
                                     <!-- Search bar -->
@@ -549,7 +571,7 @@
                         <div class="d-flex flex-column align-items-end">
                             <button 
                                 type="button" 
-                                class="btn btn-primary d-inline-flex align-items-center" 
+                                class="btn btn-primary d-inline-flex align-items-center d-lg-none" 
                                 onclick={() => showAddForm = !showAddForm}
                                 disabled={showAddForm}
                             >
@@ -833,18 +855,18 @@
         color: #6c757d;
     }
 
+    /* Keep dropdown items hover state */
+    .dropdown-item:hover {
+        background-color: rgba(108, 117, 125, 0.15);
+        color: inherit;
+    }
+
     /* Specific hover state for dropdown buttons */
     .dropdown .btn-outline-secondary:hover,
     /* .dropdown .btn-outline-secondary[aria-expanded="true"], */
     .dropdown .btn-outline-secondary.active {
         background-color: rgba(108, 117, 125, 0.04) !important;
         color: #6c757d;
-    }
-
-    /* Keep dropdown items hover state */
-    .dropdown-item:hover {
-        background-color: rgba(13, 110, 253, 0.04);
-        color: inherit;
     }
 
     /* Update search bar styles */
@@ -864,5 +886,16 @@
 
     .text-gray-500 {
         color: #adb5bd !important;
+    }
+
+    /* Ensure dropdown menu is positioned correctly */
+    .dropdown-menu {
+        position: absolute;
+        z-index: 1000;
+    }
+
+    /* Add transition for smooth dropdown appearance */
+    .dropdown-menu {
+        transition: all 0.2s ease;
     }
 </style> 

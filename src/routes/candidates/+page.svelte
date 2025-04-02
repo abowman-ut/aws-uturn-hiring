@@ -22,6 +22,7 @@
     let resumeViewUrl = $state(null);  // Add state for resume view URL
     let showResumeViewer = $state(false);  // Add state for resume viewer
     let currentResume = $state(null);  // Add state for current resume being viewed
+    let activeDropdown = $state(null);
 
     // Form data
     let newCandidate = $state({
@@ -345,6 +346,21 @@
         showResumeViewer = false;
         currentResume = null;
     }
+
+    // Function to handle dropdown selection
+    function handleDropdownSelect(dropdown, value) {
+        if (dropdown === 'department') {
+            selectedDepartment = value;
+        } else if (dropdown === 'source') {
+            selectedSource = value;
+        }
+        activeDropdown = null; // Close the dropdown
+    }
+
+    // Function to toggle dropdown
+    function toggleDropdown(dropdown) {
+        activeDropdown = activeDropdown === dropdown ? null : dropdown;
+    }
 </script>
 
 <div class="container-fluid py-3">
@@ -382,7 +398,7 @@
                 </div>
                 <button 
                     type="button" 
-                    class="btn btn-primary d-inline-flex align-items-center" 
+                    class="btn btn-primary d-inline-flex align-items-center d-lg-none" 
                     onclick={() => showAddForm = !showAddForm}
                     disabled={showAddForm}
                 >
@@ -702,38 +718,40 @@
                             </div>
 
                             {#if showFilters}
-                                <div class="d-flex gap-2 align-items-center" transition:slide={{ duration: 200 }}>
+                                <div class="d-flex gap-2" transition:slide={{ duration: 200 }}>
                                     <!-- Department filter dropdown -->
                                     <div class="dropdown">
                                         <button 
                                             class="btn btn-sm btn-outline-secondary dropdown-toggle d-flex align-items-center gap-2 {selectedDepartment !== 'All' ? 'active' : ''}" 
                                             type="button" 
-                                            data-bs-toggle="dropdown" 
-                                            aria-expanded="false"
+                                            onclick={() => toggleDropdown('department')}
+                                            aria-expanded={activeDropdown === 'department'}
                                         >
                                             <i class="bi bi-building"></i>
                                             <span>{selectedDepartment === 'All' ? 'Department' : selectedDepartment}</span>
                                         </button>
-                                        <ul class="dropdown-menu">
-                                            <li>
-                                                <button 
-                                                    class="dropdown-item {selectedDepartment === 'All' ? 'active' : ''}" 
-                                                    onclick={() => selectedDepartment = 'All'}
-                                                >
-                                                    All
-                                                </button>
-                                            </li>
-                                            {#each [...new Set(positions.map(p => p.department))] as department}
+                                        {#if activeDropdown === 'department'}
+                                            <ul class="dropdown-menu show">
                                                 <li>
                                                     <button 
-                                                        class="dropdown-item {selectedDepartment === department ? 'active' : ''}" 
-                                                        onclick={() => selectedDepartment = department}
+                                                        class="dropdown-item {selectedDepartment === 'All' ? 'active' : ''}" 
+                                                        onclick={() => handleDropdownSelect('department', 'All')}
                                                     >
-                                                        {department}
+                                                        All
                                                     </button>
                                                 </li>
-                                            {/each}
-                                        </ul>
+                                                {#each [...new Set(positions.map(p => p.department))] as department}
+                                                    <li>
+                                                        <button 
+                                                            class="dropdown-item {selectedDepartment === department ? 'active' : ''}" 
+                                                            onclick={() => handleDropdownSelect('department', department)}
+                                                        >
+                                                            {department}
+                                                        </button>
+                                                    </li>
+                                                {/each}
+                                            </ul>
+                                        {/if}
                                     </div>
 
                                     <!-- Source filter dropdown -->
@@ -741,38 +759,40 @@
                                         <button 
                                             class="btn btn-sm btn-outline-secondary dropdown-toggle d-flex align-items-center gap-2 {selectedSource !== 'All' ? 'active' : ''}" 
                                             type="button" 
-                                            data-bs-toggle="dropdown" 
-                                            aria-expanded="false"
+                                            onclick={() => toggleDropdown('source')}
+                                            aria-expanded={activeDropdown === 'source'}
                                         >
                                             <i class="bi bi-person-bounding-box"></i>
                                             <span>{selectedSource === 'All' ? 'Source' : selectedSource}</span>
                                         </button>
-                                        <ul class="dropdown-menu">
-                                            <li>
-                                                <button 
-                                                    class="dropdown-item {selectedSource === 'All' ? 'active' : ''}" 
-                                                    onclick={() => selectedSource = 'All'}
-                                                >
-                                                    All
-                                                </button>
-                                            </li>
-                                            <li>
-                                                <button 
-                                                    class="dropdown-item {selectedSource === 'Recruiter' ? 'active' : ''}" 
-                                                    onclick={() => selectedSource = 'Recruiter'}
-                                                >
-                                                    Recruiter
-                                                </button>
-                                            </li>
-                                            <li>
-                                                <button 
-                                                    class="dropdown-item {selectedSource === 'Referral' ? 'active' : ''}" 
-                                                    onclick={() => selectedSource = 'Referral'}
-                                                >
-                                                    Referral
-                                                </button>
-                                            </li>
-                                        </ul>
+                                        {#if activeDropdown === 'source'}
+                                            <ul class="dropdown-menu show">
+                                                <li>
+                                                    <button 
+                                                        class="dropdown-item {selectedSource === 'All' ? 'active' : ''}" 
+                                                        onclick={() => handleDropdownSelect('source', 'All')}
+                                                    >
+                                                        All
+                                                    </button>
+                                                </li>
+                                                <li>
+                                                    <button 
+                                                        class="dropdown-item {selectedSource === 'Recruiter' ? 'active' : ''}" 
+                                                        onclick={() => handleDropdownSelect('source', 'Recruiter')}
+                                                    >
+                                                        Recruiter
+                                                    </button>
+                                                </li>
+                                                <li>
+                                                    <button 
+                                                        class="dropdown-item {selectedSource === 'Referral' ? 'active' : ''}" 
+                                                        onclick={() => handleDropdownSelect('source', 'Referral')}
+                                                    >
+                                                        Referral
+                                                    </button>
+                                                </li>
+                                            </ul>
+                                        {/if}
                                     </div>
 
                                     <!-- Search bar -->
@@ -792,7 +812,7 @@
                         <div class="d-flex flex-column align-items-end">
                             <button 
                                 type="button" 
-                                class="btn btn-primary d-inline-flex align-items-center" 
+                                class="btn btn-primary d-inline-flex align-items-center d-lg-none" 
                                 onclick={() => showAddForm = !showAddForm}
                                 disabled={showAddForm}
                             >
@@ -1128,7 +1148,7 @@
 
     /* Keep dropdown items hover state */
     .dropdown-item:hover {
-        background-color: rgba(13, 110, 253, 0.04);
+        background-color: rgba(108, 117, 125, 0.15);
         color: inherit;
     }
 
