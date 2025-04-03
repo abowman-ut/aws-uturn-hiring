@@ -1,123 +1,183 @@
-# AWS U-Turn Hiring Platform
+# AWS U-Turn Hiring
 
-A modern hiring platform built with SvelteKit and AWS services, designed to streamline the recruitment process.
+A modern, full-stack hiring platform built with SvelteKit 2.0 and AWS services, designed to streamline the recruitment process from job posting to candidate hiring.
 
-## Features
+## 🚀 Features
 
-- **Position Management**
-  - Create, read, update, and delete job positions
-  - Track position status and requirements
-  - Environment-aware data storage
+### Position Management
+- Create and manage job positions with detailed requirements
+- Track position status (Open, On Hold, Cancelled, Filled)
+- Set hiring timelines and salary ranges
+- Department-based organization
+- Real-time position status updates
 
-- **Candidate Management**
-  - Track candidates for each position
-  - Store candidate details and application status
-  - Link candidates to specific positions
+### Candidate Management
+- Comprehensive candidate tracking system
+- Multi-stage hiring process (CV Review, Culture Fit, Interview, Decision)
+- Detailed candidate profiles with resume management
+- Automated stage progression
+- Decision tracking with notes and decision makers
+- Hiring timeline visualization
 
-- **Testing Interface**
-  - Generate test data for development
-  - Clean up test data when needed
-  - Real-time data view with automatic updates
+### Analytics Dashboard
+- Real-time hiring metrics
+- Department-wise position distribution
+- Candidate pipeline visualization
+- Average time-to-hire tracking
+- Interactive charts and statistics
 
-## Tech Stack
+### Testing Interface
+- Generate realistic test data
+- Real-time data visualization
+- API endpoint testing
+- Data cleanup capabilities
 
-- **Frontend**: SvelteKit 2.0 with Svelte 5
-- **Backend**: AWS Lambda (via SvelteKit)
-- **Database**: AWS DynamoDB
-- **Deployment**: AWS Amplify
+## 🛠 Tech Stack
 
-## Prerequisites
+### Frontend
+- SvelteKit 2.0
+- Svelte 5 with Runes
+- Chart.js for data visualization
+- Bootstrap CSS, JS, Icons
+
+### Backend
+- AWS Lambda
+- AWS DynamoDB
+- AWS Amplify for deployment
+
+## 📋 Prerequisites
 
 - Node.js 18 or higher
 - AWS account with appropriate permissions
 - AWS CLI configured with credentials
+- Understanding of SvelteKit and AWS services
 
-## Environment Setup
+## ⚙️ Environment Setup
 
-1. Create a `.env` file in the project root with the following variables:
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/your-org/aws-uturn-hiring.git
+   cd aws-uturn-hiring
+   ```
+
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+3. Configure environment variables:
+   Create a `.env` file in the project root:
    ```
    MY_AWS_ACCESS_KEY_ID=your_access_key
    MY_AWS_SECRET_ACCESS_KEY=your_secret_key
    ```
 
-2. Create DynamoDB tables:
+4. Set up DynamoDB tables:
    - Development:
-     - `uturn-positions-local`
-     - `uturn-candidates-local`
+     ```bash
+     aws dynamodb create-table --table-name uturn-positions-local --attribute-definitions AttributeName=id,AttributeType=S --key-schema AttributeName=id,KeyType=HASH --provisioned-throughput ReadCapacityUnits=5,WriteCapacityUnits=5
+     aws dynamodb create-table --table-name uturn-candidates-local --attribute-definitions AttributeName=id,AttributeType=S --key-schema AttributeName=id,KeyType=HASH --provisioned-throughput ReadCapacityUnits=5,WriteCapacityUnits=5
+     ```
    - Production:
-     - `uturn-positions`
-     - `uturn-candidates`
+     ```bash
+     aws dynamodb create-table --table-name uturn-positions --attribute-definitions AttributeName=id,AttributeType=S --key-schema AttributeName=id,KeyType=HASH --provisioned-throughput ReadCapacityUnits=10,WriteCapacityUnits=10
+     aws dynamodb create-table --table-name uturn-candidates --attribute-definitions AttributeName=id,AttributeType=S --key-schema AttributeName=id,KeyType=HASH --provisioned-throughput ReadCapacityUnits=10,WriteCapacityUnits=10
+     ```
 
-## Development
+## 🚀 Development
 
-1. Install dependencies:
-   ```bash
-   npm install
-   ```
-
-2. Start the development server:
+1. Start the development server:
    ```bash
    npm run dev
    ```
 
-3. Visit `http://localhost:5173` in your browser
+2. Open your browser and navigate to:
+   ```
+   http://localhost:5173
+   ```
 
-## Testing
+3. Access the testing interface at:
+   ```
+   http://localhost:5173/tests
+   ```
 
-The project includes a testing interface at `/tests` that allows you to:
-- Generate test data for positions and candidates
-- View all test data in real-time
-- Clean up test data when needed
-- Test API endpoints
-
-## API Endpoints
+## 📚 API Documentation
 
 ### Positions API
-- `GET /api/positions` - List all positions
-- `GET /api/positions?id=<id>` - Get a specific position
-- `POST /api/positions` - Create a new position
-- `PUT /api/positions` - Update a position
-- `DELETE /api/positions?id=<id>` - Delete a position
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/positions` | GET | List all positions |
+| `/api/positions?id=<id>` | GET | Get specific position |
+| `/api/positions` | POST | Create new position |
+| `/api/positions` | PUT | Update position |
+| `/api/positions?id=<id>` | DELETE | Delete position |
 
 ### Candidates API
-- `GET /api/candidates` - List all candidates
-- `GET /api/candidates?id=<id>` - Get a specific candidate
-- `POST /api/candidates` - Create a new candidate
-- `PUT /api/candidates` - Update a candidate
-- `DELETE /api/candidates?id=<id>` - Delete a candidate
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/candidates` | GET | List all candidates |
+| `/api/candidates?id=<id>` | GET | Get specific candidate |
+| `/api/candidates` | POST | Create new candidate |
+| `/api/candidates` | PUT | Update candidate |
+| `/api/candidates?id=<id>` | DELETE | Delete candidate |
 
-## Project Structure
+## 📁 Project Structure
 
 ```
 src/
 ├── lib/
-│   └── dynamodb.js      # DynamoDB configuration and operations
+│   ├── components/      # Reusable UI components
+│   ├── hiring-process/  # Hiring process logic
+│   └── dynamodb.js      # DynamoDB configuration
 ├── routes/
 │   ├── api/
-│   │   ├── positions/   # Positions API endpoints
-│   │   └── candidates/  # Candidates API endpoints
-│   └── tests/          # Testing interface
-└── app.html            # Main HTML template
+│   │   ├── positions/   # Position endpoints
+│   │   └── candidates/  # Candidate endpoints
+│   ├── tests/          # Testing interface
+│   └── +page.svelte    # Main pages
+└── app.html            # HTML template
 ```
 
-## Best Practices
+## 🔒 Security Considerations
 
-This project follows several best practices for maintainability and reliability:
+- Environment-specific configuration
+- Secure credential handling
+- Input validation
+- Error handling
+- Rate limiting
+- CORS configuration
 
-- **API Design**: Consistent response formats and error handling
-- **State Management**: Svelte 5's reactive state management
-- **Error Handling**: Comprehensive error catching and reporting
-- **Testing**: Built-in test data generation and cleanup
-- **Security**: Environment-aware configuration and secure credential handling
+## 🧪 Testing
 
-## Contributing
+1. Generate test data:
+   ```bash
+   npm run test:generate
+   ```
+
+2. Run tests:
+   ```bash
+   npm run test
+   ```
+
+3. Clean up test data:
+   ```bash
+   npm run test:cleanup
+   ```
+
+## 🤝 Contributing
 
 1. Fork the repository
-2. Create a feature branch
-3. Commit your changes
-4. Push to the branch
-5. Create a Pull Request
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-## License
+## 📝 License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- SvelteKit team for the amazing framework
+- AWS for the cloud infrastructure
+- All contributors who have helped improve this project
