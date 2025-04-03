@@ -28,7 +28,8 @@ export async function GET({ url }) {
             stages: {
                 cv_review: 0,
                 culture_fit: 0,
-                interview: 0
+                interview: 0,
+                rejected: 0
             }
         };
 
@@ -37,6 +38,10 @@ export async function GET({ url }) {
             const currentStage = candidate.stages[candidate.stages.length - 1];
             if (currentStage && counts.stages.hasOwnProperty(currentStage.id)) {
                 counts.stages[currentStage.id]++;
+            }
+            // Count rejected candidates
+            if (candidate.status === 'rejected') {
+                counts.stages.rejected++;
             }
         });
 

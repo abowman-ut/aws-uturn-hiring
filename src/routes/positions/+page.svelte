@@ -377,7 +377,7 @@
                                         class="form-control"
                                         id="positionTitle"
                                         bind:value={newPosition.title}
-                                        placeholder="Position Title"
+                                        placeholder="Position Title *"
                                         required
                                     />
                                 </div>
@@ -386,7 +386,7 @@
                                     <div class="select-wrapper">
                                         <i class="bi bi-building select-icon"></i>
                                         <select class="form-select ps-4" id="department" bind:value={newPosition.department} required>
-                                            <option value="">&nbsp;&nbsp;Select department</option>
+                                            <option value="">&nbsp;&nbsp;Select department *</option>
                                             {#each DEPARTMENT_OPTIONS as department}
                                                 <option value={department}>&nbsp;&nbsp;{department}</option>
                                             {/each}
@@ -400,7 +400,7 @@
                                         class="form-control"
                                         id="hiringManager"
                                         bind:value={newPosition.hiringManager}
-                                        placeholder="Hiring Manager"
+                                        placeholder="Hiring Manager *"
                                         required
                                     />
                                 </div>
@@ -409,7 +409,7 @@
                                     <div class="select-wrapper">
                                         <i class="bi bi-calendar3 select-icon"></i>
                                         <select class="form-select ps-4" id="timeline" bind:value={newPosition.timeline} required>
-                                            <option value="">&nbsp;&nbsp;Select timeline</option>
+                                            <option value="">&nbsp;&nbsp;Select timeline *</option>
                                             {#each TIMELINES as timeline}
                                                 <option value={timeline}>&nbsp;&nbsp;{timeline}</option>
                                             {/each}
@@ -712,6 +712,10 @@
                                                     <span title="Interview" class="d-flex align-items-center">
                                                         <i class="bi bi-code-square me-1"></i>
                                                         {candidateCounts[position.id]?.stages?.interview || 0}
+                                                    </span>
+                                                    <span title="Rejected" class="d-flex align-items-center">
+                                                        <i class="bi bi-x-circle me-1"></i>
+                                                        {candidateCounts[position.id]?.stages?.rejected || 0}
                                                     </span>
                                                 </div>
                                             </div>
