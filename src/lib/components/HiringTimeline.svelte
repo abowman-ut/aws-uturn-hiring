@@ -156,7 +156,7 @@
                                             type="text" 
                                             id="decisionMaker"
                                             bind:value={decisionMaker}
-                                            placeholder="Decision maker"
+                                            placeholder="Decision maker *"
                                             required
                                             class="form-input"
                                         />
