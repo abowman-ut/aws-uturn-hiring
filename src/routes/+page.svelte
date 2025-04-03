@@ -520,10 +520,16 @@
 
     /* Charts Grid */
     .charts-grid {
-        display: grid;
-        grid-template-columns: 2fr 1fr;
-        gap: 1.5rem;
-        margin-bottom: 2rem;
+        display: none;
+    }
+
+    @media (min-width: 992px) {
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
     }
 
     .chart-card {

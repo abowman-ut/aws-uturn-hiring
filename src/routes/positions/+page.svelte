@@ -258,21 +258,16 @@
 
     // Function to show salary popup
     function showSalaryPopup(event, position) {
-        event.stopPropagation(); // Prevent event bubbling
-        activeSalaryPopup = position.id;
-        
-        // Hide popup when clicking outside
-        const handleClickOutside = (e) => {
-            if (!e.target.closest('.salary-popup')) {
-                activeSalaryPopup = null;
-                document.removeEventListener('click', handleClickOutside);
-            }
-        };
-        
-        // Add listener on next tick to avoid immediate trigger
-        setTimeout(() => {
-            document.addEventListener('click', handleClickOutside);
-        }, 0);
+        event.stopPropagation();
+        // Initialize popover if not already initialized
+        const button = event.currentTarget;
+        if (!button._popover) {
+            button._popover = new bootstrap.Popover(button, {
+                trigger: 'click',
+                placement: 'top',
+                html: true
+            });
+        }
     }
 
     // Function to show status menu
@@ -634,17 +629,18 @@
                                                 >
                                                     {position.timeline}
                                                 </button>
-                                                <button 
-                                                    class="btn btn-outline-success btn-sm"
-                                                    onclick={(e) => showSalaryPopup(e, position)}
-                                                    aria-label="Show salary range"
-                                                >
-                                                    <i class="bi bi-cash"></i>
-                                                </button>
-                                                {#if activeSalaryPopup === position.id}
-                                                    <div class="salary-popup position-absolute bg-dark text-white p-2 rounded" style="top: -40px; right: 0; z-index: 1000;">
-                                                        ${position.payRange?.min?.toLocaleString() || 0} - ${position.payRange?.max?.toLocaleString() || 0}
-                                                    </div>
+                                                {#if position.payRange?.min > 0 || position.payRange?.max > 0}
+                                                    <button 
+                                                        class="btn btn-outline-success btn-sm"
+                                                        onclick={(e) => showSalaryPopup(e, position)}
+                                                        aria-label="Show salary range"
+                                                        data-bs-toggle="popover"
+                                                        data-bs-placement="top"
+                                                        data-bs-content="${position.payRange?.min?.toLocaleString() || 0} - ${position.payRange?.max?.toLocaleString() || 0}"
+                                                        data-bs-trigger="click"
+                                                    >
+                                                        <i class="bi bi-cash"></i>
+                                                    </button>
                                                 {/if}
                                                 <button 
                                                     class="btn btn-outline-danger btn-sm"
@@ -897,5 +893,22 @@
     /* Add transition for smooth dropdown appearance */
     .dropdown-menu {
         transition: all 0.2s ease;
+    }
+
+    /* Add a nice hover effect to the salary button */
+    .btn-outline-success:hover {
+        background-color: rgba(25, 135, 84, 0.1);
+    }
+    .btn-outline-success:hover i {
+        color: var(--bs-success) !important;
+    }
+
+    @keyframes spin {
+        from {
+            transform: rotate(0deg);
+        }
+        to {
+            transform: rotate(360deg);
+        }
     }
 </style> 

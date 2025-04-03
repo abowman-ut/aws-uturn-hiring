@@ -7,20 +7,19 @@ import { getInitialStage } from '$lib/hiring-process';
 function validateCandidate(candidate) {
     const errors = [];
     
+    console.log('Validating candidate:', candidate);
+    
     // Required fields
     if (!candidate.name) errors.push('Name is required');
-    if (!candidate.email) errors.push('Email is required');
     if (!candidate.positionId) errors.push('Position ID is required');
-    if (!candidate.expectedSalary) errors.push('Expected salary is required');
     if (!candidate.source) errors.push('Source is required');
-    if (!candidate.sourceName) errors.push('Source name is required');
     
-    // Validate email format
+    // Validate email format if provided
     if (candidate.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(candidate.email)) {
         errors.push('Invalid email format');
     }
     
-    // Validate salary
+    // Validate salary if provided
     if (candidate.expectedSalary) {
         const { amount, currency } = candidate.expectedSalary;
         if (!amount || !currency) {
@@ -45,6 +44,7 @@ function validateCandidate(candidate) {
         }
     }
     
+    console.log('Validation errors:', errors);
     return errors;
 }
 

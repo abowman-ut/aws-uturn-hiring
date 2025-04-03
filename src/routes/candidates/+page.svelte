@@ -23,6 +23,7 @@
     let showResumeViewer = $state(false);  // Add state for resume viewer
     let currentResume = $state(null);  // Add state for current resume being viewed
     let activeDropdown = $state(null);
+    let emailError = $state('');  // Add state for email validation error
 
     // Form data
     let newCandidate = $state({
@@ -105,7 +106,9 @@
 
     // Helper function to format source
     function formatSource(source, sourceName) {
-        return source && sourceName ? `${source.charAt(0).toUpperCase() + source.slice(1)}: ${sourceName}` : 'Not specified';
+        if (!source) return 'Not specified';
+        const formattedSource = source.charAt(0).toUpperCase() + source.slice(1);
+        return sourceName ? `${formattedSource}: ${sourceName}` : formattedSource;
     }
 
     // Helper function to get filtered candidates
@@ -147,20 +150,37 @@
         showFilters = !showFilters;
     }
 
+    // Helper function to validate email format
+    function validateEmail(email) {
+        if (!email) return true; // Empty email is valid (optional field)
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(email);
+    }
+
     async function handleSubmit(e) {
         e.preventDefault();
         isSubmitting = true;
         formError = null;
+        emailError = '';
+
+        // Validate email if provided
+        if (newCandidate.email && !validateEmail(newCandidate.email)) {
+            emailError = 'Please enter a valid email address';
+            isSubmitting = false;
+            return;
+        }
 
         try {
             // Create a copy of the candidate data and convert salary to number
             const candidateData = {
                 ...newCandidate,
-                expectedSalary: {
+                expectedSalary: newCandidate.expectedSalary.amount ? {
                     ...newCandidate.expectedSalary,
                     amount: Number(newCandidate.expectedSalary.amount)
-                }
+                } : null
             };
+
+            console.log('Submitting candidate data:', candidateData);
 
             const response = await fetch('/api/candidates', {
                 method: 'POST',
@@ -170,6 +190,7 @@
 
             if (!response.ok) {
                 const error = await response.json();
+                console.log('Error response:', error);
                 throw new Error(error.error || 'Failed to create candidate');
             }
 
@@ -231,21 +252,16 @@
 
     // Function to show salary popup
     function showSalaryPopup(event, candidate) {
-        event.stopPropagation(); // Prevent event bubbling
-        activeSalaryPopup = candidate.id;
-        
-        // Hide popup when clicking outside
-        const handleClickOutside = (e) => {
-            if (!e.target.closest('.salary-popup')) {
-                activeSalaryPopup = null;
-                document.removeEventListener('click', handleClickOutside);
-            }
-        };
-        
-        // Add listener on next tick to avoid immediate trigger
-        setTimeout(() => {
-            document.addEventListener('click', handleClickOutside);
-        }, 0);
+        event.stopPropagation();
+        // Initialize popover if not already initialized
+        const button = event.currentTarget;
+        if (!button._popover) {
+            button._popover = new bootstrap.Popover(button, {
+                trigger: 'click',
+                placement: 'top',
+                html: true
+            });
+        }
     }
 
     async function handleResumeUpload(event) {
@@ -419,7 +435,7 @@
                                     <div class="select-wrapper">
                                         <i class="bi bi-list-ul select-icon"></i>
                                         <select class="form-select ps-4" bind:value={newCandidate.positionId} required>
-                                            <option value="">&nbsp;&nbsp;Position</option>
+                                            <option value="">&nbsp;&nbsp;Position *</option>
                                             {#each positions.filter(p => p.state === 'open') as position}
                                                 <option value={position.id}>&nbsp;&nbsp;{position.title}</option>
                                             {/each}
@@ -432,7 +448,7 @@
                                         type="text" 
                                         class="form-control"
                                         bind:value={newCandidate.name}
-                                        placeholder="Name"
+                                        placeholder="Name *"
                                         required
                                     />
                                 </div>
@@ -440,22 +456,31 @@
                                 <div class="col-12">
                                     <input 
                                         type="email" 
-                                        class="form-control"
+                                        class="form-control {emailError ? 'is-invalid' : ''}"
                                         bind:value={newCandidate.email}
                                         placeholder="Email"
-                                        required
                                     />
+                                    {#if emailError}
+                                        <div class="invalid-feedback">
+                                            {emailError}
+                                        </div>
+                                    {/if}
                                 </div>
 
                                 <div class="col-12">
                                     <div class="select-wrapper">
                                         <i class="bi bi-person-bounding-box select-icon"></i>
                                         <select class="form-select ps-4" bind:value={newCandidate.source} required>
-                                            <option value="">&nbsp;&nbsp;Source</option>
+                                            <option value="">&nbsp;&nbsp;Source *</option>
                                             <option value="recruiter">&nbsp;&nbsp;Recruiter</option>
                                             <option value="referral">&nbsp;&nbsp;Referral</option>
                                         </select>
                                     </div>
+                                    {#if !newCandidate.source}
+                                        <div class="invalid-feedback">
+                                            Please select a source
+                                        </div>
+                                    {/if}
                                 </div>
 
                                 <div class="col-12">
@@ -473,7 +498,7 @@
                                             type="number" 
                                             class="form-control"
                                             bind:value={newCandidate.expectedSalary.amount}
-                                            placeholder="Expected Pay ($)"
+                                            placeholder="Expected Pay"
                                         />
                                     </div>
                                 </div>
@@ -551,7 +576,7 @@
                                 <div class="select-wrapper">
                                     <i class="bi bi-list-ul select-icon"></i>
                                     <select class="form-select ps-4" bind:value={newCandidate.positionId} required>
-                                        <option value="">&nbsp;&nbsp;Position</option>
+                                        <option value="">&nbsp;&nbsp;Position *</option>
                                         {#each positions.filter(p => p.state === 'open') as position}
                                             <option value={position.id}>&nbsp;&nbsp;{position.title}</option>
                                         {/each}
@@ -564,7 +589,7 @@
                                     type="text" 
                                     class="form-control"
                                     bind:value={newCandidate.name}
-                                    placeholder="Name"
+                                    placeholder="Name *"
                                     required
                                 />
                             </div>
@@ -572,22 +597,31 @@
                             <div class="col-12">
                                 <input 
                                     type="email" 
-                                    class="form-control"
+                                    class="form-control {emailError ? 'is-invalid' : ''}"
                                     bind:value={newCandidate.email}
                                     placeholder="Email"
-                                    required
                                 />
+                                {#if emailError}
+                                    <div class="invalid-feedback">
+                                        {emailError}
+                                    </div>
+                                {/if}
                             </div>
 
                             <div class="col-12">
                                 <div class="select-wrapper">
                                     <i class="bi bi-person-bounding-box select-icon"></i>
                                     <select class="form-select ps-4" bind:value={newCandidate.source} required>
-                                        <option value="">&nbsp;&nbsp;Source</option>
+                                        <option value="">&nbsp;&nbsp;Source *</option>
                                         <option value="recruiter">&nbsp;&nbsp;Recruiter</option>
                                         <option value="referral">&nbsp;&nbsp;Referral</option>
                                     </select>
                                 </div>
+                                {#if !newCandidate.source}
+                                    <div class="invalid-feedback">
+                                        Please select a source
+                                    </div>
+                                {/if}
                             </div>
 
                             <div class="col-12">
@@ -605,7 +639,7 @@
                                         type="number" 
                                         class="form-control"
                                         bind:value={newCandidate.expectedSalary.amount}
-                                        placeholder="Expected Pay ($)"
+                                        placeholder="Expected Pay"
                                     />
                                 </div>
                             </div>
@@ -867,10 +901,12 @@
                                                         <i class="bi bi-briefcase me-2"></i>
                                                         <span>{getPositionTitle(candidate.positionId)}</span>
                                                     </div>                                                    
-                                                    <div class="d-flex align-items-center text-muted small mb-1">
-                                                        <i class="bi bi-envelope me-2"></i>
-                                                        <span>{candidate.email}</span>
-                                                    </div>
+                                                    {#if candidate.email}
+                                                        <div class="d-flex align-items-center gap-2">
+                                                            <i class="bi bi-envelope text-muted"></i>
+                                                            <span class="text-muted small">{candidate.email}</span>
+                                                        </div>
+                                                    {/if}
                                                     <div class="d-flex align-items-center text-muted small mt-1">
                                                         <i class="bi bi-person-bounding-box me-2"></i>
                                                         <span>{formatSource(candidate.source, candidate.sourceName)}</span>
@@ -879,13 +915,19 @@
                                             </div>
                                             <div class="d-flex flex-column align-items-end">
                                                 <div class="d-flex gap-2">
-                                                    <button 
-                                                        class="btn btn-outline-success btn-sm"
-                                                        onclick={(e) => showSalaryPopup(e, candidate)}
-                                                        aria-label="Show salary range"
-                                                    >
-                                                        <i class="bi bi-cash"></i>
-                                                    </button>
+                                                    {#if candidate.expectedSalary?.amount > 0}
+                                                        <button 
+                                                            class="btn btn-outline-success btn-sm"
+                                                            onclick={(e) => showSalaryPopup(e, candidate)}
+                                                            aria-label="Show salary range"
+                                                            data-bs-toggle="popover"
+                                                            data-bs-placement="top"
+                                                            data-bs-content="${candidate.expectedSalary?.amount?.toLocaleString() || 0}"
+                                                            data-bs-trigger="click"
+                                                        >
+                                                            <i class="bi bi-cash"></i>
+                                                        </button>
+                                                    {/if}
                                                     {#if activeSalaryPopup === candidate.id}
                                                         <div class="salary-popup position-absolute bg-dark text-white p-2 rounded" style="top: -40px; right: 0; z-index: 1000;">
                                                             ${candidate.expectedSalary?.amount?.toLocaleString() || 0}
@@ -922,7 +964,8 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="d-flex justify-content-end align-items-center gap-3 mt-2 d-lg-none">
+                                        <div class="d-flex justify-content-between align-items-center gap-3 mt-2 d-lg-none">
+                                            <StageProgress candidate={candidate} />
                                             <button 
                                                 class="btn btn-link p-0 text-muted fw-bold"
                                                 onclick={() => showTimelines[candidate.id] = !showTimelines[candidate.id]}
@@ -933,7 +976,7 @@
                                         </div>
 
                                         {#if showTimelines[candidate.id]}
-                                            <div class="border-top pt-3 mt-3 d-none d-lg-block" transition:slide={{ duration: 300 }}>
+                                            <div class="border-top pt-3 mt-3" transition:slide={{ duration: 300 }}>
                                                 <HiringTimeline 
                                                     candidate={candidate} 
                                                     onUpdate={updateCandidate}
@@ -1232,6 +1275,17 @@
     /* Add a nice hover effect to the resume button */
     .btn-outline-primary:hover {
         background-color: rgba(13, 110, 253, 0.1);
+    }
+    .btn-outline-primary:hover i {
+        color: var(--bs-primary) !important;
+    }
+
+    /* Add matching hover effect for salary button */
+    .btn-outline-success:hover {
+        background-color: rgba(25, 135, 84, 0.1);
+    }
+    .btn-outline-success:hover i {
+        color: var(--bs-success) !important;
     }
 
     @keyframes spin {
