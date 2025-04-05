@@ -82,7 +82,6 @@
         try {
             isLoading = true;
             error = null;
-            console.log('Loading data...');
             const [positionsRes, candidatesRes] = await Promise.all([
                 fetch('/api/positions'),
                 fetch('/api/candidates')
@@ -124,7 +123,6 @@
 
     // Cleanup function for charts
     function cleanupCharts() {
-        console.log('Cleaning up charts...');
         try {
             if (pipelineChart) {
                 pipelineChart.destroy();

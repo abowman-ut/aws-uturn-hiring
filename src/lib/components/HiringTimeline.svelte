@@ -84,8 +84,6 @@
         updateSuccess = null;
 
         try {
-            console.log('Updating stage:', { stageId, outcome });
-            
             const updateResponse = await fetch('/api/candidates/stages', {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },

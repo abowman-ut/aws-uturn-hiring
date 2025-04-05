@@ -180,8 +180,6 @@
                 } : null
             };
 
-            console.log('Submitting candidate data:', candidateData);
-
             const response = await fetch('/api/candidates', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
