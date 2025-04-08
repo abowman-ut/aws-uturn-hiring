@@ -40,7 +40,7 @@
     
     // Get RAG status badge class
     function getRAGStatusBadgeClass(status) {
-        if (!status) return 'bg-secondary';
+        if (!status || status === 'Not Set') return 'bg-secondary';
         
         const statusLower = status.toLowerCase();
         if (statusLower.includes('red')) {
@@ -99,14 +99,31 @@
     }
 
     // Handle drop
-    function handleDrop(event) {
+    async function handleDrop(event) {
         event.preventDefault();
         isDraggingOver = false;
         
         try {
             const storyData = JSON.parse(event.dataTransfer.getData('text/plain'));
             if (!droppedStories.some(story => story.id === storyData.id)) {
-                droppedStories = [...droppedStories, storyData];
+                // Fetch additional details for the story
+                const response = await fetch(`/api/ado/user-story-details?projectId=${projectId}&userStoryId=${storyData.id}`);
+                
+                if (!response.ok) {
+                    throw new Error('Failed to fetch story details');
+                }
+                
+                const { data: details } = await response.json();
+                
+                // Add the story with all details
+                droppedStories = [...droppedStories, {
+                    id: storyData.id,
+                    title: storyData.title,
+                    state: details['System.State'],
+                    ragStatus: details['Custom.RAGStatus'] || 'Not Set',
+                    startDate: details['Microsoft.VSTS.Scheduling.StartDate'],
+                    targetDate: details['Microsoft.VSTS.Scheduling.TargetDate']
+                }];
             }
         } catch (err) {
             console.error('Error handling drop:', err);
@@ -196,19 +213,47 @@
                         <p class="mb-0 mt-2">Drag user stories here</p>
                     </div>
                 {:else}
-                    <div class="list-group">
-                        {#each droppedStories as story}
-                            <div class="list-group-item d-flex justify-content-between align-items-center">
-                                <span>{story.title}</span>
-                                <button 
-                                    class="btn btn-link text-danger p-0"
-                                    onclick={() => removeDroppedStory(story.id)}
-                                    aria-label="Remove story"
-                                >
-                                    <i class="bi bi-x"></i>
-                                </button>
-                            </div>
-                        {/each}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Status</th>
+                                    <th>RAG Status</th>
+                                    <th>Start Date</th>
+                                    <th>Target Date</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {#each droppedStories as story}
+                                    <tr>
+                                        <td>{story.title}</td>
+                                        <td>
+                                            <span class="badge {getStatusBadgeClass(story.state)}">
+                                                {story.state}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span class="badge {getRAGStatusBadgeClass(story.ragStatus)}">
+                                                {story.ragStatus}
+                                            </span>
+                                        </td>
+                                        <td>{story.startDate ? formatDate(story.startDate) : '-'}</td>
+                                        <td>{story.targetDate ? formatDate(story.targetDate) : '-'}</td>
+                                        <td class="text-end">
+                                            <button 
+                                                class="btn btn-link text-danger p-0"
+                                                onclick={() => removeDroppedStory(story.id)}
+                                                aria-label="Remove story"
+                                            >
+                                                <i class="bi bi-x"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                {/each}
+                            </tbody>
+                        </table>
                     </div>
                 {/if}
             </div>

@@ -131,7 +131,11 @@
         draggedStory = story;
         event.dataTransfer.setData('text/plain', JSON.stringify({
             id: story.id,
-            title: story.fields['System.Title']
+            title: story.fields['System.Title'],
+            state: story.fields['System.State'],
+            ragStatus: story.fields['Custom.RAGStatus'] || 'Not Set',
+            startDate: story.fields['Microsoft.VSTS.Scheduling.StartDate'] || null,
+            targetDate: story.fields['Microsoft.VSTS.Scheduling.TargetDate'] || null
         }));
         event.dataTransfer.effectAllowed = 'move';
         dispatch('dragStart', { story });
