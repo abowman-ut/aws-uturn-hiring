@@ -182,8 +182,6 @@
 </script>
 
 <div class="container mt-4">
-    <h1 class="mb-3">Azure DevOps - Uturn Work</h1>
-    
     {#if error}
         <div class="alert alert-danger" role="alert" transition:fade>
             {error}
@@ -207,6 +205,7 @@
                     onWorkItemTypeChange={loadFeaturesByType}
                     onFeatureSelect={handleFeatureSelect}
                     selectedFeatureId={selectedFeature?.id}
+                    projectId={selectedProject?.id}
                 />
             </div>
             

@@ -1,12 +1,15 @@
 <script>
     import { fade } from 'svelte/transition';
+    import UserStoryList from './UserStoryList.svelte';
 
     // Props
-    let { features = [], workItemTypes = [], onSearch, onWorkItemTypeChange, onFeatureSelect, selectedFeatureId } = $props();
+    let { features = [], workItemTypes = [], onSearch, onWorkItemTypeChange, onFeatureSelect, selectedFeatureId, projectId } = $props();
     
     // State
     let searchQuery = $state('');
     let filteredFeatures = $state([...features]);
+    let featuresWithStories = $state(new Set());
+    let loadingStories = $state(false);
     
     // Filter features based on search query
     function filterFeatures() {
@@ -37,15 +40,65 @@
         features;
         filterFeatures();
     });
+    
+    // Check if a feature has user stories
+    async function checkFeatureHasStories(featureId) {
+        if (!projectId || !featureId) return false;
+        
+        try {
+            const response = await fetch(`/api/ado?type=featureUserStories&projectId=${projectId}&featureId=${featureId}`);
+            
+            if (!response.ok) {
+                return false;
+            }
+            
+            const data = await response.json();
+            return data.data && data.data.length > 0;
+        } catch (err) {
+            console.error('Error checking user stories:', err);
+            return false;
+        }
+    }
+    
+    // Load user story counts for all features
+    async function loadUserStoryCounts() {
+        if (!projectId || features.length === 0) return;
+        
+        loadingStories = true;
+        featuresWithStories = new Set();
+        
+        try {
+            // Check a few features at a time to avoid overwhelming the API
+            const batchSize = 5;
+            for (let i = 0; i < features.length; i += batchSize) {
+                const batch = features.slice(i, i + batchSize);
+                const promises = batch.map(feature => checkFeatureHasStories(feature.id));
+                const results = await Promise.all(promises);
+                
+                // Add features with stories to the set
+                batch.forEach((feature, index) => {
+                    if (results[index]) {
+                        featuresWithStories.add(feature.id);
+                    }
+                });
+            }
+        } catch (err) {
+            console.error('Error loading user story counts:', err);
+        } finally {
+            loadingStories = false;
+        }
+    }
+    
+    // Load user story counts when features change
+    $effect(() => {
+        if (features.length > 0 && projectId) {
+            loadUserStoryCounts();
+        }
+    });
 </script>
 
 <div class="card mb-4">
     <div class="card-header">
-        <div class="d-flex justify-content-between align-items-center mb-2">
-            <h5 class="card-title mb-0">Features</h5>
-            <span class="badge bg-primary">{filteredFeatures.length} features</span>
-        </div>
-        
         <!-- Search Input -->
         <div class="input-group input-group-sm">
             <span class="input-group-text py-0" id="search-icon">
@@ -73,6 +126,11 @@
                     <i class="bi bi-x"></i>
                 </button>
             {/if}
+        </div>
+        
+        <!-- Feature Count -->
+        <div class="mt-2 text-end">
+            <small class="text-muted">{filteredFeatures.length}/{features.length} features</small>
         </div>
         
         <!-- Work Item Type Selector -->
@@ -110,11 +168,22 @@
                     }}
                 >
                     <div class="d-flex justify-content-between align-items-center">
-                        <span>{feature.fields['System.Title']}</span>
-                        <span class="badge bg-secondary">{feature.id}</span>
+                        <div class="d-flex align-items-center">
+                            <span>{feature.fields['System.Title']}</span>
+                        </div>
+                        <div>
+                            <span class="badge {feature.fields['System.State'].toLowerCase().includes('done') || feature.fields['System.State'].toLowerCase().includes('completed') ? 'bg-success' : 'bg-secondary'}">
+                                {feature.fields['System.State']}
+                            </span>
+                        </div>
                     </div>
                 </button>
             {/each}
         {/if}
     </div>
-</div> 
+</div>
+
+<!-- User Stories List -->
+{#if selectedFeatureId && projectId && filteredFeatures.some(f => f.id === selectedFeatureId)}
+    <UserStoryList {projectId} featureId={selectedFeatureId} />
+{/if} 
