@@ -33,6 +33,7 @@
             <ul class="navbar-nav me-auto">
                 {@render navItem('Positions', '/positions', 'bi bi-list-ul')}
                 {@render navItem('Candidates', '/candidates', 'bi bi-people')}
+                {@render navItem('Azure DevOps', '/ado', 'bi bi-cloud')}
             </ul>
             <ul class="navbar-nav">
                 {#if isDev}
