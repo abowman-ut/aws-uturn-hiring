@@ -1,9 +1,13 @@
 <script>
     import { fade } from 'svelte/transition';
     import { onMount } from 'svelte';
+    import { createEventDispatcher } from 'svelte';
 
     // Props
     let { projectId, featureId } = $props();
+    
+    // Create event dispatcher
+    const dispatch = createEventDispatcher();
     
     // State
     let userStories = $state([]);
@@ -12,6 +16,7 @@
     let statusFilter = $state('all');
     let isLoading = $state(false);
     let error = $state(null);
+    let draggedStory = $state(null);
     
     // Format date for display
     function formatDate(dateString) {
@@ -120,6 +125,23 @@
             isLoading = false;
         }
     }
+
+    // Handle drag start
+    function handleDragStart(event, story) {
+        draggedStory = story;
+        event.dataTransfer.setData('text/plain', JSON.stringify({
+            id: story.id,
+            title: story.fields['System.Title']
+        }));
+        event.dataTransfer.effectAllowed = 'move';
+        dispatch('dragStart', { story });
+    }
+
+    // Handle drag end
+    function handleDragEnd() {
+        draggedStory = null;
+        dispatch('dragEnd');
+    }
 </script>
 
 <div class="card mb-3" transition:fade>
@@ -202,7 +224,13 @@
         {:else}
             <div class="list-group">
                 {#each filteredStories as story}
-                    <div class="list-group-item">
+                    <div 
+                        class="list-group-item"
+                        draggable="true"
+                        ondragstart={(e) => handleDragStart(e, story)}
+                        ondragend={handleDragEnd}
+                        class:dragging={draggedStory?.id === story.id}
+                    >
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
                                 <h6 class="mb-1">{story.fields['System.Title']}</h6>
@@ -221,4 +249,11 @@
             </div>
         {/if}
     </div>
-</div> 
+</div>
+
+<style>
+    .dragging {
+        opacity: 0.5;
+        cursor: move;
+    }
+</style> 

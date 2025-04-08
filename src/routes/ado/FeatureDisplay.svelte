@@ -10,6 +10,8 @@
     let ragStatusComments = $state(null);
     let loadingRagStatus = $state(false);
     let ragStatusError = $state(null);
+    let droppedStories = $state([]);
+    let isDraggingOver = $state(false);
     
     // Format date for display
     function formatDate(dateString) {
@@ -84,6 +86,37 @@
     onMount(() => {
         fetchRagStatus();
     });
+
+    // Handle drag over
+    function handleDragOver(event) {
+        event.preventDefault();
+        isDraggingOver = true;
+    }
+
+    // Handle drag leave
+    function handleDragLeave() {
+        isDraggingOver = false;
+    }
+
+    // Handle drop
+    function handleDrop(event) {
+        event.preventDefault();
+        isDraggingOver = false;
+        
+        try {
+            const storyData = JSON.parse(event.dataTransfer.getData('text/plain'));
+            if (!droppedStories.some(story => story.id === storyData.id)) {
+                droppedStories = [...droppedStories, storyData];
+            }
+        } catch (err) {
+            console.error('Error handling drop:', err);
+        }
+    }
+
+    // Remove dropped story
+    function removeDroppedStory(storyId) {
+        droppedStories = droppedStories.filter(story => story.id !== storyId);
+    }
 </script>
 
 <div class="card mb-3" transition:fade>
@@ -138,15 +171,48 @@
             </div>
         </div>
         
-        <!-- RAG Status Comments -->
+        <!-- Executive Summary (formerly RAG Status Comments) -->
         {#if ragStatusComments}
             <div class="mt-3">
-                <h6>RAG Status Comments</h6>
+                <h6>Executive Summary</h6>
                 <div class="border rounded p-2 bg-light">
                     {@html ragStatusComments}
                 </div>
             </div>
         {/if}
+        
+        <!-- Milestone Status (formerly Dropped User Stories) -->
+        <div class="mt-4">
+            <h6>Milestone Status</h6>
+            <div 
+                class="droppable-area p-3 border rounded {isDraggingOver ? 'dragging-over' : ''}"
+                ondragover={handleDragOver}
+                ondragleave={handleDragLeave}
+                ondrop={handleDrop}
+            >
+                {#if droppedStories.length === 0}
+                    <div class="text-center text-muted py-3">
+                        <i class="bi bi-arrow-down-circle"></i>
+                        <p class="mb-0 mt-2">Drag user stories here</p>
+                    </div>
+                {:else}
+                    <div class="list-group">
+                        {#each droppedStories as story}
+                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                <span>{story.title}</span>
+                                <button 
+                                    class="btn btn-link text-danger p-0"
+                                    onclick={() => removeDroppedStory(story.id)}
+                                    aria-label="Remove story"
+                                >
+                                    <i class="bi bi-x"></i>
+                                </button>
+                            </div>
+                        {/each}
+                    </div>
+                {/if}
+            </div>
+        </div>
         
         <!-- Acceptance Criteria -->
         {#if feature.fields['Microsoft.VSTS.Common.AcceptanceCriteria']}
@@ -158,4 +224,16 @@
             </div>
         {/if}
     </div>
-</div> 
+</div>
+
+<style>
+    .droppable-area {
+        min-height: 100px;
+        transition: all 0.2s ease;
+    }
+    
+    .dragging-over {
+        background-color: rgba(0, 123, 255, 0.1);
+        border: 2px dashed #007bff !important;
+    }
+</style> 
