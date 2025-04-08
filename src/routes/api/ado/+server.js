@@ -133,7 +133,16 @@ export async function GET({ url, fetch }) {
                 
                 // Get work item details
                 const workItemIds = wiqlData.workItems.map(item => item.id);
-                const fields = ['System.Id', 'System.Title', 'System.State', 'System.WorkItemType', 'System.CreatedDate', 'System.ChangedDate'];
+                const fields = [
+                    'System.Id', 
+                    'System.Title', 
+                    'System.State', 
+                    'System.WorkItemType', 
+                    'System.CreatedDate', 
+                    'System.ChangedDate',
+                    'Microsoft.VSTS.Scheduling.StartDate',
+                    'Microsoft.VSTS.Scheduling.TargetDate'
+                ];
                 const detailsPath = `${projectId}/_apis/wit/workitems?ids=${workItemIds.join(',')}&fields=${fields.join(',')}&api-version=${AZURE_DEVOPS_CONFIG.apiVersion}`;
                 const detailsData = await makeAzureDevOpsRequest(detailsPath);
                 

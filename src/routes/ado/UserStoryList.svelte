@@ -234,13 +234,17 @@
                         ondragstart={(e) => handleDragStart(e, story)}
                         ondragend={handleDragEnd}
                         class:dragging={draggedStory?.id === story.id}
+                        role="listitem"
                     >
                         <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <h6 class="mb-1">{story.fields['System.Title']}</h6>
-                                <small class="text-muted">
-                                    Created: {formatDate(story.fields['System.CreatedDate'])}
-                                </small>
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-grip-vertical text-muted me-2"></i>
+                                <div>
+                                    <h6 class="mb-1">{story.fields['System.Title']}</h6>
+                                    <small class="text-muted">
+                                        Created: {formatDate(story.fields['System.CreatedDate'])}
+                                    </small>
+                                </div>
                             </div>
                             <div>
                                 <span class="badge {getStatusBadgeClass(story.fields['System.State'])}">
@@ -259,5 +263,9 @@
     .dragging {
         opacity: 0.5;
         cursor: move;
+    }
+    
+    .bi-grip-vertical {
+        cursor: grab;
     }
 </style> 

@@ -12,6 +12,7 @@
     let ragStatusError = $state(null);
     let droppedStories = $state([]);
     let isDraggingOver = $state(false);
+    let draggedStoryId = $state(null);
     
     // Format date for display
     function formatDate(dateString) {
@@ -134,26 +135,52 @@
     function removeDroppedStory(storyId) {
         droppedStories = droppedStories.filter(story => story.id !== storyId);
     }
+
+    // Handle drag start for resorting
+    function handleDragStart(event, storyId) {
+        draggedStoryId = storyId;
+        event.dataTransfer.effectAllowed = 'move';
+    }
+
+    // Handle drag over for resorting
+    function handleDragOverStory(event, storyId) {
+        event.preventDefault();
+        if (draggedStoryId === storyId) return;
+        
+        const draggedIndex = droppedStories.findIndex(story => story.id === draggedStoryId);
+        const dropIndex = droppedStories.findIndex(story => story.id === storyId);
+        
+        if (draggedIndex !== -1 && dropIndex !== -1) {
+            const newStories = [...droppedStories];
+            const [draggedStory] = newStories.splice(draggedIndex, 1);
+            newStories.splice(dropIndex, 0, draggedStory);
+            droppedStories = newStories;
+        }
+    }
+
+    // Handle drag end for resorting
+    function handleDragEnd() {
+        draggedStoryId = null;
+    }
 </script>
 
 <div class="card mb-3" transition:fade>
     <!-- Header -->
     <div class="card-header d-flex justify-content-between align-items-center">
-        <h5 class="card-title mb-0">
-            {feature.fields['System.Title']}
-        </h5>
+        <div class="d-flex align-items-center gap-2">
+            <h5 class="card-title mb-0">
+                {feature.fields['System.Title']}
+            </h5>
+            <span class="badge bg-secondary">#{feature.id}</span>
+        </div>
         <div>
-            <span class="badge {getStatusBadgeClass(feature.fields['System.State'])} me-2">
-                {feature.fields['System.State']}
-            </span>
             {#if loadingRagStatus}
                 <span class="badge bg-secondary me-2">Loading RAG Status...</span>
             {:else if ragStatus}
-                <span class="badge {getRAGStatusBadgeClass(ragStatus)} me-2">
-                    {ragStatus}
-                </span>
+                <button class="btn btn-sm btn-success me-2">
+                    <strong>Project Status: {ragStatus}</strong>
+                </button>
             {/if}
-            <span class="badge bg-secondary">#{feature.id}</span>
         </div>
     </div>
     
@@ -172,8 +199,10 @@
         <!-- Metadata -->
         <div class="row">
             <div class="col-md-6">
-                <p><strong>Created:</strong> {formatDate(feature.fields['System.CreatedDate'])}</p>
-                <p><strong>Changed:</strong> {formatDate(feature.fields['System.ChangedDate'])}</p>
+                <div class="d-flex flex-column">
+                    <p><strong>Start Date:</strong> {formatDate(feature.fields['Microsoft.VSTS.Scheduling.StartDate'])}</p>
+                    <p><strong>Target Date:</strong> {formatDate(feature.fields['Microsoft.VSTS.Scheduling.TargetDate'])}</p>
+                </div>
             </div>
             <div class="col-md-6">
                 {#if feature.fields['System.AssignedTo']}
@@ -182,16 +211,13 @@
                 {#if feature.fields['System.Priority']}
                     <p><strong>Priority:</strong> {feature.fields['System.Priority']}</p>
                 {/if}
-                {#if ragStatus}
-                    <p><strong>RAG Status:</strong> {ragStatus}</p>
-                {/if}
             </div>
         </div>
         
         <!-- Executive Summary (formerly RAG Status Comments) -->
         {#if ragStatusComments}
             <div class="mt-3">
-                <h6>Executive Summary</h6>
+                <h6 class="fw-bold">Executive Summary</h6>
                 <div class="border rounded p-2 bg-light">
                     {@html ragStatusComments}
                 </div>
@@ -200,12 +226,14 @@
         
         <!-- Milestone Status (formerly Dropped User Stories) -->
         <div class="mt-4">
-            <h6>Milestone Status</h6>
+            <h6 class="fw-bold">Milestone Status</h6>
             <div 
                 class="droppable-area p-3 border rounded {isDraggingOver ? 'dragging-over' : ''}"
                 ondragover={handleDragOver}
                 ondragleave={handleDragLeave}
                 ondrop={handleDrop}
+                role="region"
+                aria-label="Drop zone for user stories"
             >
                 {#if droppedStories.length === 0}
                     <div class="text-center text-muted py-3">
@@ -217,17 +245,26 @@
                         <table class="table table-hover">
                             <thead>
                                 <tr>
-                                    <th>Name</th>
-                                    <th>Status</th>
-                                    <th>RAG Status</th>
-                                    <th>Start Date</th>
-                                    <th>Target Date</th>
+                                    <th style="width: 40px"></th>
+                                    <th style="width: 100%"><span class="small text-muted text-uppercase">MILESTONE</span></th>
+                                    <th></th>
+                                    <th></th>
+                                    <th><span class="small text-muted text-uppercase">START</span></th>
+                                    <th><span class="small text-muted text-uppercase">TARGET</span></th>
                                     <th></th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {#each droppedStories as story}
-                                    <tr>
+                                    <tr 
+                                        draggable="true"
+                                        ondragstart={(e) => handleDragStart(e, story.id)}
+                                        ondragover={(e) => handleDragOverStory(e, story.id)}
+                                        ondragend={handleDragEnd}
+                                    >
+                                        <td class="text-muted">
+                                            <i class="bi bi-grip-vertical"></i>
+                                        </td>
                                         <td>{story.title}</td>
                                         <td>
                                             <span class="badge {getStatusBadgeClass(story.state)}">
@@ -239,8 +276,8 @@
                                                 {story.ragStatus}
                                             </span>
                                         </td>
-                                        <td>{story.startDate ? formatDate(story.startDate) : '-'}</td>
-                                        <td>{story.targetDate ? formatDate(story.targetDate) : '-'}</td>
+                                        <td class="text-nowrap small">{story.startDate ? formatDate(story.startDate) : '-'}</td>
+                                        <td class="text-nowrap small">{story.targetDate ? formatDate(story.targetDate) : '-'}</td>
                                         <td class="text-end">
                                             <button 
                                                 class="btn btn-link text-danger p-0"
@@ -279,6 +316,14 @@
     
     .dragging-over {
         background-color: rgba(0, 123, 255, 0.1);
-        border: 2px dashed #007bff !important;
+        border: 2px dashed #007bff;
+    }
+    
+    .bi-grip-vertical {
+        cursor: grab;
+    }
+    
+    .table th {
+        font-weight: normal;
     }
 </style> 

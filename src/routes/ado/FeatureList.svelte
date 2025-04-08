@@ -171,11 +171,6 @@
                         <div class="d-flex align-items-center">
                             <span>{feature.fields['System.Title']}</span>
                         </div>
-                        <div>
-                            <span class="badge {feature.fields['System.State'].toLowerCase().includes('done') || feature.fields['System.State'].toLowerCase().includes('completed') ? 'bg-success' : 'bg-secondary'}">
-                                {feature.fields['System.State']}
-                            </span>
-                        </div>
                     </div>
                 </button>
             {/each}
