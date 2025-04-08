@@ -220,7 +220,9 @@ export async function GET({ url, fetch }) {
                         'System.CompletedWork',
                         'System.CreatedBy',
                         'System.ChangedBy',
-                        'Microsoft.VSTS.Common.AcceptanceCriteria'
+                        'Microsoft.VSTS.Common.AcceptanceCriteria',
+                        'Custom.RAGStatus',
+                        'Custom.RAGStatusComments'
                     ];
                     
                     const detailsPath = `${projectId}/_apis/wit/workitems?ids=${childWorkItemIds.join(',')}&fields=${fields.join(',')}&api-version=${AZURE_DEVOPS_CONFIG.apiVersion}`;
@@ -236,6 +238,35 @@ export async function GET({ url, fetch }) {
                     console.error('Error fetching tasks:', error);
                     return json({ error: error.message || 'Failed to fetch tasks' }, { status: 500 });
                 }
+            }
+
+            case 'workItemFields': {
+                // Get all available work item fields
+                const path = `_apis/wit/fields?api-version=${AZURE_DEVOPS_CONFIG.apiVersion}`;
+                const data = await makeAzureDevOpsRequest(path);
+                
+                // Group fields by category for better organization
+                const fieldsByCategory = {};
+                data.value.forEach(field => {
+                    const category = field.category || 'Other';
+                    if (!fieldsByCategory[category]) {
+                        fieldsByCategory[category] = [];
+                    }
+                    fieldsByCategory[category].push({
+                        name: field.referenceName,
+                        displayName: field.name,
+                        description: field.description,
+                        type: field.type,
+                        usage: field.usage,
+                        isIdentity: field.isIdentity || false,
+                        isPicklist: field.isPicklist || false,
+                        isPicklistSuggested: field.isPicklistSuggested || false,
+                        isQueryable: field.isQueryable || false,
+                        isSortable: field.isSortable || false
+                    });
+                });
+                
+                return json({ data: fieldsByCategory });
             }
 
             default:
