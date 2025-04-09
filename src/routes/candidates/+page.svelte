@@ -37,7 +37,8 @@
         },
         source: '',
         sourceName: '',
-        resume: null
+        resume: null,
+        linkedin: ''  // Add LinkedIn field
     });
 
     // Add state for resume upload
@@ -237,7 +238,8 @@
             expectedSalary: { amount: '', currency: 'USD' },
             source: '',
             sourceName: '',
-            resume: null
+            resume: null,
+            linkedin: ''
         };
         showAddForm = false;
     }
@@ -503,6 +505,20 @@
 
                                 <div class="col-12">
                                     <div class="input-group">
+                                        <label class="input-group-text py-0">
+                                            <i class="bi bi-linkedin"></i>
+                                        </label>
+                                        <input 
+                                            type="text" 
+                                            class="form-control"
+                                            bind:value={newCandidate.linkedin}
+                                            placeholder="Profile URL"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div class="col-12">
+                                    <div class="input-group">
                                         <label for="resume-upload" class="input-group-text py-0">
                                             <i class="bi bi-file-text"></i>
                                         </label>
@@ -638,6 +654,20 @@
                                         class="form-control"
                                         bind:value={newCandidate.expectedSalary.amount}
                                         placeholder="Expected Pay"
+                                    />
+                                </div>
+                            </div>
+
+                            <div class="col-12">
+                                <div class="input-group">
+                                    <label class="input-group-text py-0">
+                                        <i class="bi bi-linkedin"></i>
+                                    </label>
+                                    <input 
+                                        type="text" 
+                                        class="form-control"
+                                        bind:value={newCandidate.linkedin}
+                                        placeholder="Profile URL"
                                     />
                                 </div>
                             </div>
@@ -931,9 +961,21 @@
                                                             ${candidate.expectedSalary?.amount?.toLocaleString() || 0}
                                                         </div>
                                                     {/if}
+                                                    {#if candidate.linkedin}
+                                                        <a 
+                                                            href={candidate.linkedin}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            class="btn btn-outline-primary btn-sm"
+                                                            title="View LinkedIn Profile"
+                                                            aria-label="View LinkedIn profile for {candidate.name}"
+                                                        >
+                                                            <i class="bi bi-linkedin"></i>
+                                                        </a>
+                                                    {/if}
                                                     {#if candidate.resume}
                                                         <button 
-                                                            class="btn btn-outline-primary btn-sm"
+                                                            class="btn btn-outline-dark btn-sm"
                                                             onclick={(e) => handleResumeClick(e, candidate)}
                                                             title="View Resume"
                                                             aria-label="View resume for {candidate.name}"
