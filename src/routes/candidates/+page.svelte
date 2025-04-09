@@ -505,10 +505,11 @@
 
                                 <div class="col-12">
                                     <div class="input-group">
-                                        <label class="input-group-text py-0">
+                                        <label class="input-group-text py-0" for="linkedin-input">
                                             <i class="bi bi-linkedin"></i>
                                         </label>
                                         <input 
+                                            id="linkedin-input"
                                             type="text" 
                                             class="form-control"
                                             bind:value={newCandidate.linkedin}
@@ -660,10 +661,11 @@
 
                             <div class="col-12">
                                 <div class="input-group">
-                                    <label class="input-group-text py-0">
+                                    <label class="input-group-text py-0" for="linkedin-input-2">
                                         <i class="bi bi-linkedin"></i>
                                     </label>
                                     <input 
+                                        id="linkedin-input-2"
                                         type="text" 
                                         class="form-control"
                                         bind:value={newCandidate.linkedin}
