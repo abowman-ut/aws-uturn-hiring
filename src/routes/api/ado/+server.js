@@ -9,18 +9,40 @@ const AZURE_DEVOPS_CONFIG = {
     apiVersion: '6.0'
 };
 
+// Debug logging
+console.log('Azure DevOps Configuration:', {
+    baseUrl: AZURE_DEVOPS_CONFIG.baseUrl,
+    organization: AZURE_DEVOPS_CONFIG.organization,
+    hasToken: !!AZURE_DEVOPS_CONFIG.personalAccessToken,
+    envKeys: Object.keys(env)
+});
+
 // Build Azure DevOps URL
 function buildAzureDevOpsUrl(path) {
     const org = encodeURIComponent(AZURE_DEVOPS_CONFIG.organization);
-    return `${AZURE_DEVOPS_CONFIG.baseUrl}/${org}/${path}`;
+    const url = `${AZURE_DEVOPS_CONFIG.baseUrl}/${org}/${path}`;
+    console.log('Built Azure DevOps URL:', url);
+    return url;
 }
 
 // Make Azure DevOps API request
 async function makeAzureDevOpsRequest(path, method = 'GET', body = null) {
+    console.log('Making Azure DevOps request:', {
+        path,
+        method,
+        hasBody: !!body,
+        config: {
+            baseUrl: AZURE_DEVOPS_CONFIG.baseUrl,
+            organization: AZURE_DEVOPS_CONFIG.organization,
+            hasToken: !!AZURE_DEVOPS_CONFIG.personalAccessToken
+        }
+    });
+
     const url = buildAzureDevOpsUrl(path);
     
     // Validate configuration
     if (!AZURE_DEVOPS_CONFIG.organization) {
+        console.error('Azure DevOps organization missing. Available env vars:', Object.keys(env));
         throw new Error('Azure DevOps organization is not configured');
     }
     if (!AZURE_DEVOPS_CONFIG.personalAccessToken) {
@@ -36,6 +58,7 @@ async function makeAzureDevOpsRequest(path, method = 'GET', body = null) {
     }
 
     try {
+        console.log('Sending request to:', url);
         const response = await fetch(url, {
             method,
             headers,
@@ -43,10 +66,21 @@ async function makeAzureDevOpsRequest(path, method = 'GET', body = null) {
         });
 
         if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Azure DevOps API error:', {
+                status: response.status,
+                statusText: response.statusText,
+                errorText
+            });
             throw new Error(`Azure DevOps API error: ${response.status} ${response.statusText}`);
         }
 
-        return await response.json();
+        const data = await response.json();
+        console.log('Azure DevOps response received:', {
+            status: response.status,
+            hasData: !!data
+        });
+        return data;
     } catch (error) {
         console.error('Azure DevOps request failed:', error);
         throw error;
