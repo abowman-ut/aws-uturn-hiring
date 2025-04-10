@@ -11,6 +11,14 @@ export default defineConfig({
 			allow: ['.']
 		}
 	},
+	optimizeDeps: {
+		exclude: [
+			'chart.js',
+			'@sveltejs/kit',
+			'svelte',
+			'svelte-runtime'
+		]
+	},
 	define: {
 		'process.env.MY_AWS_ACCESS_KEY_ID': JSON.stringify(process.env.MY_AWS_ACCESS_KEY_ID),
 		'process.env.MY_AWS_SECRET_ACCESS_KEY': JSON.stringify(process.env.MY_AWS_SECRET_ACCESS_KEY),

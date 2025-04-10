@@ -896,24 +896,7 @@
                     <!-- Candidates List -->
                     <div class="candidates-list">
                         {#if isLoading}
-                            {#each Array(3) as _, i}
-                                <div class="card mb-3" in:fade>
-                                    <div class="card-body">
-                                        <div class="d-flex justify-content-between align-items-start mb-3">
-                                            <div style="width: 60%;">
-                                                <div class="skeleton-line" style="width: 40%; height: 24px;"></div>
-                                                <div class="mt-2">
-                                                    <div class="skeleton-line" style="width: 70%; height: 16px;"></div>
-                                                    <div class="skeleton-line mt-2" style="width: 50%; height: 16px;"></div>
-                                                </div>
-                                            </div>
-                                            <div style="width: 30%;">
-                                                <div class="skeleton-line" style="width: 100%; height: 32px;"></div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            {/each}
+                            <LoadingSkeleton pageType="candidates" />
                         {:else if candidates.length === 0}
                             <div class="text-center text-muted py-5">
                                 <i class="bi bi-people display-4"></i>
