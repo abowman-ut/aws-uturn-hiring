@@ -1,6 +1,6 @@
 <script>
     import { base } from '$app/paths';
-    import { browser } from '$app/environment';
+    import { browser, dev } from '$app/environment';
     import DashboardContent from '$lib/components/dashboard/DashboardContent.svelte';
     import DashboardErrorBoundary from '$lib/components/dashboard/DashboardErrorBoundary.svelte';
     import StateButtons from '$lib/components/StateButtons.svelte';
@@ -123,14 +123,16 @@
 </script>
 
 <div class="page-container" role="main" aria-label="Dashboard">
-    <StateButtons 
-        isLoading={uiState.isLoading}
-        showEmptyState={uiState.showEmptyState}
-        error={uiState.error}
-        onToggleLoading={() => handleToggleState('loading')}
-        onToggleEmptyState={() => handleToggleState('empty')}
-        onToggleError={() => handleToggleState('error')}
-    />
+    {#if dev}
+        <StateButtons 
+            isLoading={uiState.isLoading}
+            showEmptyState={uiState.showEmptyState}
+            error={uiState.error}
+            onToggleLoading={() => handleToggleState('loading')}
+            onToggleEmptyState={() => handleToggleState('empty')}
+            onToggleError={() => handleToggleState('error')}
+        />
+    {/if}
     
     {#if uiState.error}
         <DashboardErrorBoundary error={uiState.error} retryAction={loadData} aria-live="assertive" />
