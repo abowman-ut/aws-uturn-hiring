@@ -1,12 +1,9 @@
 <script>
     import { base } from '$app/paths';
     import { browser } from '$app/environment';
-    import LoadingSkeleton from '$lib/components/dashboard/LoadingSkeleton.svelte';
-    import DashboardEmptyState from '$lib/components/dashboard/DashboardEmptyState.svelte';
+    import DashboardContent from '$lib/components/dashboard/DashboardContent.svelte';
     import DashboardErrorBoundary from '$lib/components/dashboard/DashboardErrorBoundary.svelte';
     import StateButtons from '$lib/components/StateButtons.svelte';
-    import DashboardStats from '$lib/components/dashboard/DashboardStats.svelte';
-    import DashboardCharts from '$lib/components/dashboard/DashboardCharts.svelte';
     import { Chart, registerables } from 'chart.js';
     import { calculateDashboardStats } from '$lib/utils/dashboardUtils';
     import { createChartManager } from '$lib/utils/chartManager';
@@ -137,53 +134,23 @@
     
     {#if uiState.error}
         <DashboardErrorBoundary error={uiState.error} retryAction={loadData} aria-live="assertive" />
-    {:else if uiState.isLoading}
-        <div class="content-card" role="region" aria-label="Loading dashboard content">
-            <LoadingSkeleton statCards={10} charts={2} />
-        </div>
-    {:else if uiState.showEmptyState || isEmptyData}
-        <div class="content-card" role="region" aria-label="Empty dashboard state">
-            <DashboardEmptyState 
-                icon="bi bi-speedometer2"
-                title="No Dashboard Data Available"
-                message="There is no data to display at this time."
-                actionLabel="Refresh Data"
-                showAction={true}
-                actionHandler={loadData}
-                aria-live="polite"
-            />
-        </div>
     {:else}
-        <div class="content-card" role="region" aria-label="Dashboard content">
-            <!-- Stats Cards -->
-            <DashboardStats positions={dataState.positions} candidates={dataState.candidates} />
-            
-            <!-- Charts -->
-            <DashboardCharts positions={dataState.positions} candidates={dataState.candidates} />
-        </div>
+        <DashboardContent
+            positions={dataState.positions}
+            candidates={dataState.candidates}
+            isLoading={uiState.isLoading}
+            isEmptyData={isEmptyData}
+            showEmptyState={uiState.showEmptyState}
+            loadData={loadData}
+        />
     {/if}
 </div>
 
 <style>
-    /* Layout */
     .page-container {
         max-width: 1400px;
         margin: var(--spacing-xl) auto;
         padding: 0 var(--spacing-md);
-    }
-
-    .content-card {
-        background: white;
-        border-radius: var(--radius-lg);
-        padding: var(--spacing-xl);
-        box-shadow: var(--shadow-md);
-    }
-
-    /* Responsive Layout */
-    @media (max-width: 640px) {
-        .content-card {
-            padding: var(--spacing-lg);
-        }
     }
 </style>
 
