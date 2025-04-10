@@ -2,8 +2,15 @@
 	import 'bootstrap/dist/css/bootstrap.min.css';
 	import 'bootstrap-icons/font/bootstrap-icons.css';
 	import NavBar from "$lib/components/NavBar.svelte";
+	import { browser } from '$app/environment';
+	import { applyColorVariables } from '$lib/utils/colors';
 
 	let { children } = $props();
+
+	// Apply color variables when the app initializes
+	if (browser) {
+		applyColorVariables();
+	}
 </script>
 
 <NavBar />
