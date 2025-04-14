@@ -26,6 +26,7 @@
     let currentResume = $state(null);  // Add state for current resume being viewed
     let activeDropdown = $state(null);
     let emailError = $state('');  // Add state for email validation error
+    let windowWidth = $state(0);  // Add window width state
 
     // Form data
     let newCandidate = $state({
@@ -56,6 +57,16 @@
         { id: 'decision', name: 'Decision', icon: 'bi-check-circle' },
         { id: 'rejected', name: 'Rejected', icon: 'bi-x-circle' }
     ];
+
+    // Add window resize effect
+    $effect(() => {
+        if (typeof window !== 'undefined') {
+            windowWidth = window.innerWidth;
+            const handleResize = () => windowWidth = window.innerWidth;
+            window.addEventListener('resize', handleResize);
+            return () => window.removeEventListener('resize', handleResize);
+        }
+    });
 
     // Load data when component mounts
     $effect(() => {
@@ -1015,7 +1026,7 @@
                             </button>
                             
                             <!-- Candidate count - always visible on lg screens -->
-                            <div class="d-flex align-items-center text-muted small" class:d-none={!showFilters && window.innerWidth < 992}>
+                            <div class="d-flex align-items-center text-muted small" class:d-none={!showFilters && windowWidth < 992}>
                                 <span class="badge border border-secondary text-secondary d-flex align-items-center gap-1">
                                     <i class="bi bi-list-ul"></i>
                                     {getFilteredCandidates().length} of {candidates.length}

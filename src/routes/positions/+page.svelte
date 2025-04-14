@@ -11,7 +11,7 @@
     let isSubmitting = $state(false);
     let formError = $state(null);
     let formSuccess = $state(null);
-    let window = $state({ innerWidth: 0 });
+    let windowWidth = $state(0);
     let isLoading = $state(true);
     let selectedFilter = $state('all');
     let selectedTimeline = $state('All');
@@ -62,15 +62,14 @@
         loadData();
     });
 
-    onMount(() => {
-        window.innerWidth = globalThis.window.innerWidth;
-        const handleResize = () => {
-            window.innerWidth = globalThis.window.innerWidth;
-        };
-        globalThis.window.addEventListener('resize', handleResize);
-        return () => {
-            globalThis.window.removeEventListener('resize', handleResize);
-        };
+    // Add window resize effect
+    $effect(() => {
+        if (typeof window !== 'undefined') {
+            windowWidth = window.innerWidth;
+            const handleResize = () => windowWidth = window.innerWidth;
+            window.addEventListener('resize', handleResize);
+            return () => window.removeEventListener('resize', handleResize);
+        }
     });
 
     async function loadData() {
@@ -368,7 +367,7 @@
         </div>
 
         <!-- Sidebar with entry form -->
-        {#if showAddForm || window.innerWidth >= 992}
+        {#if showAddForm || windowWidth >= 992}
             <div class="col-12 col-lg-4 col-xl-3 {showAddForm ? 'mb-4' : ''}" transition:slide={{ duration: 300 }}>
                 <div class="card">
                     <div class="card-body">
@@ -587,7 +586,7 @@
                             </button>
                             
                             <!-- Position count - always visible on lg screens -->
-                            <div class="d-flex align-items-center text-muted small" class:d-none={!showFilters && window.innerWidth < 992}>
+                            <div class="d-flex align-items-center text-muted small" class:d-none={!showFilters && windowWidth < 992}>
                                 <span class="badge border border-secondary text-secondary d-flex align-items-center gap-1">
                                     <i class="bi bi-list-ul"></i>
                                     {getFilteredPositions().length} of {positions.length}
