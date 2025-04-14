@@ -1,6 +1,6 @@
 <script>
     import { base } from '$app/paths';
-    import { slide } from 'svelte/transition';
+    import { slide, fade } from 'svelte/transition';
     import { onMount } from 'svelte';
     import { untrack } from 'svelte';
 
