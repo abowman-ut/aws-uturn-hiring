@@ -2,6 +2,7 @@
     import { base } from '$app/paths';
     import HiringTimeline from '$lib/components/HiringTimeline.svelte';
     import StageProgress from '$lib/components/StageProgress.svelte';
+    import LoadingSkeleton from '$lib/components/dashboard/LoadingSkeleton.svelte';
     import { slide, fade } from 'svelte/transition';
     import { untrack } from 'svelte';
     let title = $state('Candidates');
