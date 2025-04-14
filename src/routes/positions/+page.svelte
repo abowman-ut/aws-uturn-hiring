@@ -357,7 +357,10 @@
                     <!-- Position count - only shown when filters are visible -->
                     {#if showFilters}
                         <div class="d-flex align-items-center text-muted small text-end mt-3" transition:slide={{ duration: 200 }}>
-                            Showing {getFilteredPositions().length} of {positions.length} positions
+                            <span class="badge border border-secondary text-secondary d-flex align-items-center gap-1">
+                                <i class="bi bi-list-ul"></i>
+                                {getFilteredPositions().length} of {positions.length}
+                            </span>
                         </div>
                     {/if}
                 </div>
@@ -583,12 +586,13 @@
                                 <span class="ms-2 d-none d-sm-inline">Add Position</span>
                             </button>
                             
-                            <!-- Position count - only shown when filters are visible -->
-                            {#if showFilters}
-                                <div class="d-flex align-items-center text-muted small text-end mt-3" transition:slide={{ duration: 200 }}>
-                                    Showing {getFilteredPositions().length} of {positions.length} positions
-                                </div>
-                            {/if}
+                            <!-- Position count - always visible on lg screens -->
+                            <div class="d-flex align-items-center text-muted small" class:d-none={!showFilters && window.innerWidth < 992}>
+                                <span class="badge border border-secondary text-secondary d-flex align-items-center gap-1">
+                                    <i class="bi bi-list-ul"></i>
+                                    {getFilteredPositions().length} of {positions.length}
+                                </span>
+                            </div>
                         </div>
                     </div>
 

@@ -1014,12 +1014,13 @@
                                 <span class="ms-2 d-none d-sm-inline">Add Candidate</span>
                             </button>
                             
-                            <!-- Candidate count - only shown when filters are visible -->
-                            {#if showFilters}
-                                <div class="d-flex align-items-center text-muted small text-end mt-3" transition:slide={{ duration: 200 }}>
-                                    Showing {getFilteredCandidates().length} of {candidates.length} candidates
-                                </div>
-                            {/if}
+                            <!-- Candidate count - always visible on lg screens -->
+                            <div class="d-flex align-items-center text-muted small" class:d-none={!showFilters && window.innerWidth < 992}>
+                                <span class="badge border border-secondary text-secondary d-flex align-items-center gap-1">
+                                    <i class="bi bi-list-ul"></i>
+                                    {getFilteredCandidates().length} of {candidates.length}
+                                </span>
+                            </div>
                         </div>
                     </div>
 
