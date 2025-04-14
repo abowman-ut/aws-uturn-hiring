@@ -18,6 +18,7 @@
     let showFilters = $state(false);
     let selectedStage = $state('all');
     let selectedDepartment = $state('All');
+    let selectedPosition = $state('All');  // Add position filter state
     let selectedSource = $state('All');
     let searchQuery = $state('');
     let resumeViewUrl = $state(null);  // Add state for resume view URL
@@ -128,6 +129,11 @@
                 const position = positions.find(p => p.id === candidate.positionId);
                 return position?.department === selectedDepartment;
             });
+        }
+
+        // Filter by position
+        if (selectedPosition !== 'All') {
+            filtered = filtered.filter(candidate => candidate.positionId === selectedPosition);
         }
 
         // Filter by source
@@ -368,6 +374,8 @@
     function handleDropdownSelect(dropdown, value) {
         if (dropdown === 'department') {
             selectedDepartment = value;
+        } else if (dropdown === 'position') {
+            selectedPosition = value;
         } else if (dropdown === 'source') {
             selectedSource = value;
         }
@@ -812,6 +820,45 @@
                                                             onclick={() => handleDropdownSelect('department', department)}
                                                         >
                                                             {department}
+                                                        </button>
+                                                    </li>
+                                                {/each}
+                                            </ul>
+                                        {/if}
+                                    </div>
+
+                                    <!-- Position filter dropdown -->
+                                    <div class="dropdown">
+                                        <button 
+                                            class="btn btn-sm btn-outline-secondary dropdown-toggle d-flex align-items-center gap-2 {selectedPosition !== 'All' ? 'active' : ''}" 
+                                            type="button" 
+                                            onclick={() => toggleDropdown('position')}
+                                            aria-expanded={activeDropdown === 'position'}
+                                            disabled={selectedDepartment === 'All' ? false : !positions.some(p => p.department === selectedDepartment && p.state === 'open')}
+                                        >
+                                            <i class="bi bi-briefcase"></i>
+                                            <span>{selectedPosition === 'All' ? 'Position' : getPositionTitle(selectedPosition)}</span>
+                                        </button>
+                                        {#if activeDropdown === 'position'}
+                                            <ul class="dropdown-menu show">
+                                                <li>
+                                                    <button 
+                                                        class="dropdown-item {selectedPosition === 'All' ? 'active' : ''}" 
+                                                        onclick={() => handleDropdownSelect('position', 'All')}
+                                                    >
+                                                        All
+                                                    </button>
+                                                </li>
+                                                {#each positions.filter(p => 
+                                                    p.state === 'open' && 
+                                                    (selectedDepartment === 'All' || p.department === selectedDepartment)
+                                                ) as position}
+                                                    <li>
+                                                        <button 
+                                                            class="dropdown-item {selectedPosition === position.id ? 'active' : ''}" 
+                                                            onclick={() => handleDropdownSelect('position', position.id)}
+                                                        >
+                                                            {position.title}
                                                         </button>
                                                     </li>
                                                 {/each}
