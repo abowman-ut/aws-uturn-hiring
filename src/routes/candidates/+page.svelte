@@ -31,6 +31,7 @@
     let newCandidate = $state({
         name: '',
         email: '',
+        phone: '',  // Add phone field
         status: 'cv_review',
         positionId: '',
         expectedSalary: {
@@ -240,6 +241,7 @@
         newCandidate = {
             name: '',
             email: '',
+            phone: '',
             status: 'cv_review',
             positionId: '',
             expectedSalary: { amount: '', currency: 'USD' },
@@ -463,12 +465,18 @@
                                 </div>
 
                                 <div class="col-12">
-                                    <input 
-                                        type="email" 
-                                        class="form-control {emailError ? 'is-invalid' : ''}"
-                                        bind:value={newCandidate.email}
-                                        placeholder="Email"
-                                    />
+                                    <div class="input-group">
+                                        <label class="input-group-text py-0" for="email-input">
+                                            <i class="bi bi-envelope"></i>
+                                        </label>
+                                        <input 
+                                            id="email-input"
+                                            type="email" 
+                                            class="form-control {emailError ? 'is-invalid' : ''}"
+                                            bind:value={newCandidate.email}
+                                            placeholder="Email"
+                                        />
+                                    </div>
                                     {#if emailError}
                                         <div class="invalid-feedback">
                                             {emailError}
@@ -477,12 +485,49 @@
                                 </div>
 
                                 <div class="col-12">
-                                    <div class="select-wrapper">
-                                        <i class="bi bi-person-bounding-box select-icon"></i>
-                                        <select class="form-select ps-4" bind:value={newCandidate.source} required>
-                                            <option value="">&nbsp;&nbsp;Source *</option>
-                                            <option value="recruiter">&nbsp;&nbsp;Recruiter</option>
-                                            <option value="referral">&nbsp;&nbsp;Referral</option>
+                                    <div class="input-group">
+                                        <label class="input-group-text py-0" for="phone-input">
+                                            <i class="bi bi-telephone"></i>
+                                        </label>
+                                        <input 
+                                            id="phone-input"
+                                            type="tel" 
+                                            class="form-control"
+                                            bind:value={newCandidate.phone}
+                                            placeholder="Phone"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div class="col-12">
+                                    <div class="input-group">
+                                        <label class="input-group-text py-0" for="salary-input">
+                                            <i class="bi bi-cash"></i>
+                                        </label>
+                                        <input 
+                                            id="salary-input"
+                                            type="number" 
+                                            class="form-control"
+                                            bind:value={newCandidate.expectedSalary.amount}
+                                            placeholder="Expected Pay"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div class="col-12">
+                                    <div class="input-group">
+                                        <label class="input-group-text py-0" for="source-input">
+                                            <i class="bi bi-person-bounding-box"></i>
+                                        </label>
+                                        <select 
+                                            id="source-input"
+                                            class="form-select" 
+                                            bind:value={newCandidate.source} 
+                                            required
+                                        >
+                                            <option value="">Source *</option>
+                                            <option value="recruiter">Recruiter</option>
+                                            <option value="referral">Referral</option>
                                         </select>
                                     </div>
                                     {#if !newCandidate.source}
@@ -492,25 +537,22 @@
                                     {/if}
                                 </div>
 
-                                <div class="col-12">
-                                    <input 
-                                        type="text" 
-                                        class="form-control"
-                                        bind:value={newCandidate.sourceName}
-                                        placeholder="Source Contact"
-                                    />
-                                </div>
-
-                                <div class="col-12">
-                                    <div class="input-group">
-                                        <input 
-                                            type="number" 
-                                            class="form-control"
-                                            bind:value={newCandidate.expectedSalary.amount}
-                                            placeholder="Expected Pay"
-                                        />
+                                {#if newCandidate.source}
+                                    <div class="col-12">
+                                        <div class="input-group">
+                                            <label class="input-group-text py-0" for="source-contact-input">
+                                                <i class="bi bi-person-bounding-box"></i>
+                                            </label>
+                                            <input 
+                                                id="source-contact-input"
+                                                type="text" 
+                                                class="form-control"
+                                                bind:value={newCandidate.sourceName}
+                                                placeholder="Source Contact"
+                                            />
+                                        </div>
                                     </div>
-                                </div>
+                                {/if}
 
                                 <div class="col-12">
                                     <div class="input-group">
@@ -619,12 +661,18 @@
                             </div>
 
                             <div class="col-12">
-                                <input 
-                                    type="email" 
-                                    class="form-control {emailError ? 'is-invalid' : ''}"
-                                    bind:value={newCandidate.email}
-                                    placeholder="Email"
-                                />
+                                <div class="input-group">
+                                    <label class="input-group-text py-0" for="email-input-2">
+                                        <i class="bi bi-envelope"></i>
+                                    </label>
+                                    <input 
+                                        id="email-input-2"
+                                        type="email" 
+                                        class="form-control {emailError ? 'is-invalid' : ''}"
+                                        bind:value={newCandidate.email}
+                                        placeholder="Email"
+                                    />
+                                </div>
                                 {#if emailError}
                                     <div class="invalid-feedback">
                                         {emailError}
@@ -633,12 +681,49 @@
                             </div>
 
                             <div class="col-12">
-                                <div class="select-wrapper">
-                                    <i class="bi bi-person-bounding-box select-icon"></i>
-                                    <select class="form-select ps-4" bind:value={newCandidate.source} required>
-                                        <option value="">&nbsp;&nbsp;Source *</option>
-                                        <option value="recruiter">&nbsp;&nbsp;Recruiter</option>
-                                        <option value="referral">&nbsp;&nbsp;Referral</option>
+                                <div class="input-group">
+                                    <label class="input-group-text py-0" for="phone-input-2">
+                                        <i class="bi bi-telephone"></i>
+                                    </label>
+                                    <input 
+                                        id="phone-input-2"
+                                        type="tel" 
+                                        class="form-control"
+                                        bind:value={newCandidate.phone}
+                                        placeholder="Phone"
+                                    />
+                                </div>
+                            </div>
+
+                            <div class="col-12">
+                                <div class="input-group">
+                                    <label class="input-group-text py-0" for="salary-input-2">
+                                        <i class="bi bi-cash"></i>
+                                    </label>
+                                    <input 
+                                        id="salary-input-2"
+                                        type="number" 
+                                        class="form-control"
+                                        bind:value={newCandidate.expectedSalary.amount}
+                                        placeholder="Expected Pay"
+                                    />
+                                </div>
+                            </div>
+
+                            <div class="col-12">
+                                <div class="input-group">
+                                    <label class="input-group-text py-0" for="source-input-2">
+                                        <i class="bi bi-person-bounding-box"></i>
+                                    </label>
+                                    <select 
+                                        id="source-input-2"
+                                        class="form-select" 
+                                        bind:value={newCandidate.source} 
+                                        required
+                                    >
+                                        <option value="">Source *</option>
+                                        <option value="recruiter">Recruiter</option>
+                                        <option value="referral">Referral</option>
                                     </select>
                                 </div>
                                 {#if !newCandidate.source}
@@ -648,25 +733,22 @@
                                 {/if}
                             </div>
 
-                            <div class="col-12">
-                                <input 
-                                    type="text" 
-                                    class="form-control"
-                                    bind:value={newCandidate.sourceName}
-                                    placeholder="Source Contact"
-                                />
-                            </div>
-
-                            <div class="col-12">
-                                <div class="input-group">
-                                    <input 
-                                        type="number" 
-                                        class="form-control"
-                                        bind:value={newCandidate.expectedSalary.amount}
-                                        placeholder="Expected Pay"
-                                    />
+                            {#if newCandidate.source}
+                                <div class="col-12">
+                                    <div class="input-group">
+                                        <label class="input-group-text py-0" for="source-contact-input-2">
+                                            <i class="bi bi-person-bounding-box"></i>
+                                        </label>
+                                        <input 
+                                            id="source-contact-input-2"
+                                            type="text" 
+                                            class="form-control"
+                                            bind:value={newCandidate.sourceName}
+                                            placeholder="Source Contact"
+                                        />
+                                    </div>
                                 </div>
-                            </div>
+                            {/if}
 
                             <div class="col-12">
                                 <div class="input-group">
@@ -962,12 +1044,20 @@
                                                         <i class="bi bi-briefcase me-2"></i>
                                                         <span>{getPositionTitle(candidate.positionId)}</span>
                                                     </div>                                                    
-                                                    {#if candidate.email}
-                                                        <div class="d-flex align-items-center gap-2">
-                                                            <i class="bi bi-envelope text-muted"></i>
-                                                            <span class="text-muted small">{candidate.email}</span>
-                                                        </div>
-                                                    {/if}
+                                                    <div class="d-flex align-items-center gap-3">
+                                                        {#if candidate.email}
+                                                            <div class="d-flex align-items-center gap-2">
+                                                                <i class="bi bi-envelope text-muted"></i>
+                                                                <span class="text-muted small">{candidate.email}</span>
+                                                            </div>
+                                                        {/if}
+                                                        {#if candidate.phone}
+                                                            <div class="d-flex align-items-center gap-2">
+                                                                <i class="bi bi-telephone text-muted"></i>
+                                                                <span class="text-muted small">{candidate.phone}</span>
+                                                            </div>
+                                                        {/if}
+                                                    </div>
                                                     <div class="d-flex align-items-center text-muted small mt-1">
                                                         <i class="bi bi-person-bounding-box me-2"></i>
                                                         <span>{formatSource(candidate.source, candidate.sourceName)}</span>

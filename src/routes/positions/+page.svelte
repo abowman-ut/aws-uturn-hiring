@@ -383,35 +383,44 @@
                                 </div>
 
                                 <div class="col-12">
-                                    <div class="select-wrapper">
-                                        <i class="bi bi-building select-icon"></i>
-                                        <select class="form-select ps-4" id="department" bind:value={newPosition.department} required>
-                                            <option value="">&nbsp;&nbsp;Select department *</option>
+                                    <div class="input-group">
+                                        <label class="input-group-text py-0" for="department">
+                                            <i class="bi bi-building"></i>
+                                        </label>
+                                        <select class="form-select" id="department" bind:value={newPosition.department} required>
+                                            <option value="">Select department *</option>
                                             {#each DEPARTMENT_OPTIONS as department}
-                                                <option value={department}>&nbsp;&nbsp;{department}</option>
+                                                <option value={department}>{department}</option>
                                             {/each}
                                         </select>
                                     </div>
                                 </div>
 
                                 <div class="col-12">
-                                    <input 
-                                        type="text" 
-                                        class="form-control"
-                                        id="hiringManager"
-                                        bind:value={newPosition.hiringManager}
-                                        placeholder="Hiring Manager *"
-                                        required
-                                    />
+                                    <div class="input-group">
+                                        <label class="input-group-text py-0" for="hiringManager-2">
+                                            <i class="bi bi-person"></i>
+                                        </label>
+                                        <input 
+                                            type="text" 
+                                            class="form-control"
+                                            id="hiringManager-2"
+                                            bind:value={newPosition.hiringManager}
+                                            placeholder="Hiring Manager *"
+                                            required
+                                        />
+                                    </div>
                                 </div>
 
                                 <div class="col-12">
-                                    <div class="select-wrapper">
-                                        <i class="bi bi-calendar3 select-icon"></i>
-                                        <select class="form-select ps-4" id="timeline" bind:value={newPosition.timeline} required>
-                                            <option value="">&nbsp;&nbsp;Select timeline *</option>
+                                    <div class="input-group">
+                                        <label class="input-group-text py-0" for="timeline">
+                                            <i class="bi bi-calendar3"></i>
+                                        </label>
+                                        <select class="form-select" id="timeline" bind:value={newPosition.timeline} required>
+                                            <option value="">Select timeline *</option>
                                             {#each TIMELINES as timeline}
-                                                <option value={timeline}>&nbsp;&nbsp;{timeline}</option>
+                                                <option value={timeline}>{timeline}</option>
                                             {/each}
                                         </select>
                                     </div>
