@@ -771,9 +771,6 @@
         pointer-events: none;
     }
 
-    .select-wrapper select {
-        padding-left: 35px;
-    }
 
     .salary-popup {
         font-size: 0.875rem;
