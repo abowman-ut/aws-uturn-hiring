@@ -28,8 +28,8 @@
 	});
 	
 	onMount(async () => {
-		// ✅ Only import and configure Amplify on the client
-		await import('$lib/amplify');
+		const { configureAmplify } = await import('$lib/amplify-client.js');
+		await configureAmplify();
 
 		const { Auth } = await import('aws-amplify');
 		try {
