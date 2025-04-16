@@ -7,7 +7,7 @@
 	import { applyColorVariables } from '$lib/utils/colors';
 	import { authState } from '$lib/stores/auth.svelte.js';
 	import { page } from '$app/state';
-	import '$lib/amplify';
+	// import '$lib/amplify';
 
 	let { children } = $props();
 	let currentPage = $state(page);
@@ -28,12 +28,15 @@
 	});
 	
 	onMount(async () => {
+		// ✅ Only import and configure Amplify on the client
+		await import('$lib/amplify');
+
 		const { Auth } = await import('aws-amplify');
 		try {
-		user = await Auth.currentAuthenticatedUser();
-		console.log("✅ Authenticated:", user);
+			const user = await Auth.currentAuthenticatedUser();
+			console.log("✅ Authenticated:", user);
 		} catch (err) {
-		console.error("🔥 Auth error:", err);
+			console.error("🔥 Auth error:", err);
 		}
 	});
 </script>
