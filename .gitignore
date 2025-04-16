@@ -27,7 +27,6 @@ vite.config.ts.timestamp-*
 .cursor/rules
 
 # AWS
-src/lib/amplify.js
 *.pem
 *.key
 *.cert
