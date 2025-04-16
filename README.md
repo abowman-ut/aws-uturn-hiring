@@ -181,3 +181,44 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - SvelteKit team for the amazing framework
 - AWS for the cloud infrastructure
 - All contributors who have helped improve this project
+
+## Environment Variables
+
+Create a `.env` file in the root directory with the following variables:
+
+```bash
+# AWS Configuration
+AWS_ACCESS_KEY_ID=your_access_key_id
+AWS_SECRET_ACCESS_KEY=your_secret_access_key
+AWS_REGION=your_region
+AWS_TABLE_NAME=your_table_name
+
+# AWS Cognito Configuration
+VITE_COGNITO_REGION=your_region
+VITE_COGNITO_USER_POOL_ID=your_user_pool_id
+VITE_COGNITO_USER_POOL_WEB_CLIENT_ID=your_client_id
+
+# Toggl Configuration
+TOGGL_API_TOKEN=your_api_token
+TOGGL_WORKSPACE_ID=your_workspace_id
+
+# Azure Configuration
+VITE_AZURE_CLIENT_ID=your_client_id
+VITE_AZURE_TENANT_ID=your_tenant_id
+VITE_REDIRECT_URI=your_redirect_uri
+```
+
+### AWS Cognito Setup
+
+1. Create a Cognito User Pool in your AWS account
+2. Configure the following settings:
+   - App client settings
+   - Callback URLs
+   - Identity providers
+   - Required attributes
+   - Password policy
+   - MFA settings (if needed)
+3. Copy the following values from your Cognito User Pool:
+   - Region (e.g., us-east-1)
+   - User Pool ID
+   - App Client ID
