@@ -26,6 +26,7 @@
             label: 'Verification Code',
             type: 'text',
             value: () => code,
+            setValue: (value) => code = value,
             required: true,
             placeholder: 'Enter the code from your email'
         }
@@ -64,17 +65,4 @@
 </AuthLayout>
 
 <style>
-    .auth-links {
-        margin-top: 1.5rem;
-        text-align: center;
-    }
-    
-    .auth-links a {
-        color: #0d6efd;
-        text-decoration: none;
-    }
-    
-    .auth-links a:hover {
-        text-decoration: underline;
-    }
 </style>

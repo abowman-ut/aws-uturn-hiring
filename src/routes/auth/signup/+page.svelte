@@ -15,6 +15,7 @@
       label: 'Email',
       type: 'email',
       value: () => email,
+      setValue: (value) => email = value,
       required: true,
       autocomplete: 'email'
     },
@@ -23,6 +24,7 @@
       label: 'Password',
       type: 'password',
       value: () => password,
+      setValue: (value) => password = value,
       required: true,
       autocomplete: 'new-password'
     }
@@ -58,17 +60,4 @@
 </AuthLayout>
 
 <style>
-  .auth-links {
-    margin-top: 1.5rem;
-    text-align: center;
-  }
-  
-  .auth-links a {
-    color: #0d6efd;
-    text-decoration: none;
-  }
-  
-  .auth-links a:hover {
-    text-decoration: underline;
-  }
 </style>

@@ -21,18 +21,4 @@
 </div>
 
 <style>
-    .auth-container {
-        max-width: 400px;
-        margin: 2rem auto;
-        padding: 2rem;
-        background: white;
-        border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-    
-    .description {
-        color: #64748b;
-        margin-bottom: 1.5rem;
-        line-height: 1.5;
-    }
 </style> 
