@@ -4,19 +4,41 @@
 	import NavBar from "$lib/components/NavBar.svelte";
 	import { browser } from '$app/environment';
 	import { applyColorVariables } from '$lib/utils/colors';
+	import { authState } from '$lib/stores/auth.svelte.js';
+	import { page } from '$app/state';
+	import '$lib/amplify';
 
 	let { children } = $props();
+	let currentPage = $state(page);
 
-	// Apply color variables when the app initializes
+	// Initialize auth state on mount
 	if (browser) {
+		console.log('Initializing layout...');
 		applyColorVariables();
+		authState.checkAuth();
 	}
+
+	// Watch for path changes
+	$effect(() => {
+		if (browser) {
+			console.log('Path changed:', currentPage.url.pathname);
+			authState.updatePath(currentPage.url.pathname);
+		}
+	});
 </script>
 
-<NavBar />
-<main class="main-content">
-	{@render children()}
-</main>
+{#if !authState.loading || ['/auth/login', '/auth/signup', '/auth/confirm'].includes(currentPage.url.pathname)}
+	<NavBar />
+	<main class="main-content">
+		{@render children()}
+	</main>
+{:else}
+	<div class="d-flex justify-content-center align-items-center" style="height: 100vh;">
+		<div class="spinner-border text-primary" role="status">
+			<span class="visually-hidden">Loading...</span>
+		</div>
+	</div>
+{/if}
 
 <style>
 	:global(body) {

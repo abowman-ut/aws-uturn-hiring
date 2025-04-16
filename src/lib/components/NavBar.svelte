@@ -1,5 +1,8 @@
 <script>
 	import { page } from '$app/state';
+	import { goto } from '$app/navigation';
+	// import { authState } from '$lib/stores/auth';
+    import { authState } from '$lib/stores/auth.svelte.js';
     
 	let activePage = $derived(page.url.pathname);
 	let isDev = $state(import.meta.env.DEV);
@@ -7,6 +10,14 @@
 
 	function toggleMenu() {
 		isMenuOpen = !isMenuOpen;
+	}
+
+	async function handleLogout() {
+		try {
+			await authState.logout();
+		} catch (err) {
+			console.error('Logout failed:', err);
+		}
 	}
 </script>
 
@@ -30,12 +41,28 @@
         </button>
 
         <div class="collapse navbar-collapse {isMenuOpen ? 'show' : ''}" id="navbarNav">
-            <ul class="navbar-nav me-auto">
-                {@render navItem('Positions', '/positions', 'bi bi-list-ul')}
-                {@render navItem('Candidates', '/candidates', 'bi bi-people')}
-            </ul>
+            {#if authState.isAuthenticated}
+                <ul class="navbar-nav me-auto">
+                    {@render navItem('Positions', '/positions', 'bi bi-list-ul')}
+                    {@render navItem('Candidates', '/candidates', 'bi bi-people')}
+                </ul>
+            {/if}
             <ul class="navbar-nav">
-                {#if isDev}
+                {#if authState.isAuthenticated}
+                    <li class="nav-item">
+                        <button 
+                            class="nav-link" 
+                            onclick={handleLogout}
+                            disabled={authState.loading}
+                        >
+                            <i class="bi bi-box-arrow-right"></i>
+                            <span>{authState.loading ? 'Logging out...' : 'Logout'}</span>
+                        </button>
+                    </li>
+                {:else}
+                    {@render navItem('Login', '/auth/login', 'bi bi-box-arrow-in-right')}
+                {/if}
+                {#if isDev && authState.isAuthenticated}
                     {@render navItem('Profile', '/profile', 'bi bi-person')}
                     {@render navItem('Tests', '/tests', 'bi bi-clipboard-check')}
                 {/if}
@@ -108,6 +135,9 @@
         gap: 0.5rem;
         font-size: 0.9375rem;
         transition: all 0.2s ease;
+        background: none;
+        border: none;
+        cursor: pointer;
     }
 
     .nav-icon {
@@ -122,6 +152,11 @@
     .nav-link.active {
         color: white;
         font-weight: 500;
+    }
+
+    .nav-link:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
     }
 
     @media (max-width: 767.98px) {

@@ -12,6 +12,12 @@ export default defineConfig({
 		}
 	},
 	optimizeDeps: {
+		esbuildOptions: {
+			// Node.js global to browser globalThis
+			define: {
+			  global: 'globalThis'
+			}
+		},
 		exclude: [
 			'chart.js',
 			'@sveltejs/kit',
@@ -19,7 +25,14 @@ export default defineConfig({
 			'svelte-runtime'
 		]
 	},
+	resolve: {
+		alias: {
+		  './runtimeConfig': './runtimeConfig.browser', // Fix for AWS SDK
+		}
+	  },
 	define: {
+		'global': {}, // Fix for AWS Amplify
+		'process.env': {},
 		'process.env.MY_AWS_ACCESS_KEY_ID': JSON.stringify(process.env.MY_AWS_ACCESS_KEY_ID),
 		'process.env.MY_AWS_SECRET_ACCESS_KEY': JSON.stringify(process.env.MY_AWS_SECRET_ACCESS_KEY),
 		'process.env.MY_AWS_REGION': JSON.stringify(process.env.MY_AWS_REGION || 'us-east-1')

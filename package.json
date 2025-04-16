@@ -17,14 +17,18 @@
 		"vite": "^6.0.0"
 	},
 	"dependencies": {
+		"@aws-amplify/auth": "^5.1.0",
+		"@aws-amplify/core": "^5.1.0",
 		"@aws-sdk/client-dynamodb": "^3.777.0",
 		"@aws-sdk/client-s3": "^3.777.0",
 		"@aws-sdk/lib-dynamodb": "^3.777.0",
 		"@aws-sdk/s3-request-presigner": "^3.777.0",
 		"amplify-adapter": "^0.2.0",
+		"aws-amplify": "^4.3.46",
 		"bootstrap": "^5.3.3",
 		"bootstrap-icons": "^1.11.3",
 		"chart.js": "^4.4.8",
-		"dotenv": "^16.4.7"
+		"dotenv": "^16.4.7",
+		"oidc-client-ts": "^3.2.0"
 	}
 }
