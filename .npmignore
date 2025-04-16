@@ -1,0 +1,9 @@
+# .npmignore
+node_modules
+*.log
+*.md
+*.tsbuildinfo
+src/**/*.test.*
+tests/
+.vscode/
+.env
