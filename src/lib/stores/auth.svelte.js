@@ -1,4 +1,3 @@
-import { Auth } from 'aws-amplify';
 import { goto } from '$app/navigation';
 
 const publicRoutes = ['/auth/login', '/auth/signup', '/auth/confirm'];
@@ -15,6 +14,7 @@ class AuthStore {
         this.loading = true;
         
         try {
+            const { Auth } = await import('aws-amplify');
             const user = await Auth.currentAuthenticatedUser();
             this.isAuthenticated = true;
             this.user = user;
@@ -40,6 +40,7 @@ class AuthStore {
         this.loading = true;
         
         try {
+            const { Auth } = await import('aws-amplify');
             const user = await Auth.signIn({
                 username: String(email).trim(),
                 password: String(password).trim()
@@ -61,6 +62,7 @@ class AuthStore {
         this.loading = true;
         
         try {
+            const { Auth } = await import('aws-amplify');
             await Auth.signOut();
             this.isAuthenticated = false;
             this.user = null;

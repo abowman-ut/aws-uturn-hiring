@@ -1,5 +1,4 @@
 <script>
-    import { Auth } from 'aws-amplify';
     import { goto } from '$app/navigation';
     
     let email = $state('');
@@ -7,6 +6,7 @@
     
     async function loadUser() {
         try {
+            const { Auth } = await import('aws-amplify');
             const user = await Auth.currentAuthenticatedUser();
             email = user.attributes.email;
         } catch (err) {
@@ -54,6 +54,7 @@
                 <button 
                     class="btn btn-link text-danger p-0"
                     onclick={async () => {
+                        const { Auth } = await import('aws-amplify');
                         await Auth.signOut();
                         goto('/auth/login');
                     }}
