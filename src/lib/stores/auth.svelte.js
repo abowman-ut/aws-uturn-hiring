@@ -10,29 +10,35 @@ class AuthStore {
 
     async checkAuth() {
         if (this.loading) return;
-        
+    
         this.loading = true;
-        
+        console.log('🔍 Checking auth...');
+    
         try {
             const { Auth } = await import('aws-amplify');
             const user = await Auth.currentAuthenticatedUser();
             this.isAuthenticated = true;
             this.user = user;
-
-            if (publicRoutes.includes(this.currentPath)) {
+    
+            console.log('✅ User is authenticated:', user);
+            console.log('📍 Current path:', this.currentPath);
+    
+            if (['/auth/login', '/auth/signup', '/auth/confirm'].includes(this.currentPath)) {
+                console.log('🚀 Redirecting to /');
                 goto('/');
             }
         } catch {
             this.isAuthenticated = false;
             this.user = null;
-
-            if (!publicRoutes.includes(this.currentPath)) {
+    
+            if (!['/auth/login', '/auth/signup', '/auth/confirm'].includes(this.currentPath)) {
+                console.log('🔐 Not authenticated — redirecting to login');
                 goto('/auth/login');
             }
         } finally {
             this.loading = false;
         }
-    }
+    }    
 
     async login(email, password) {
         if (this.loading) return;
