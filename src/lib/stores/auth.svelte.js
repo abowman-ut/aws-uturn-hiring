@@ -48,11 +48,12 @@ class AuthStore {
             
             this.isAuthenticated = true;
             this.user = user;
-            goto('/');
+            // goto('/');
         } catch (err) {
             throw err;
         } finally {
             this.loading = false;
+            await this.checkAuth();
         }
     }
 
