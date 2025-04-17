@@ -35,8 +35,9 @@
     async function handleConfirm() {
         loading = true;
         error = '';
-        
+
         try {
+            const { Auth } = await import('aws-amplify'); // ✅ import only on client
             await Auth.confirmSignUp(email, code);
             goto('/auth/login?confirmed=true');
         } catch (err) {
@@ -45,6 +46,7 @@
             loading = false;
         }
     }
+
 </script>
 
 <AuthLayout 

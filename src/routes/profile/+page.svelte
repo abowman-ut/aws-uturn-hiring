@@ -1,5 +1,4 @@
 <script>
-    import { Auth } from 'aws-amplify';
     import { goto } from '$app/navigation';
     import ProfilePopover from '$lib/components/ProfilePopover.svelte';
     
@@ -7,6 +6,7 @@
     let loading = $state(true);
     
     async function loadUser() {
+        const { Auth } = await import('aws-amplify');
         try {
             user = await Auth.currentAuthenticatedUser();
         } catch (err) {

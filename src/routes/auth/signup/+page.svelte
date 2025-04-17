@@ -33,8 +33,9 @@
   async function handleSignUp() {
     loading = true;
     error = '';
-    
+
     try {
+      const { Auth } = await import('aws-amplify'); // ✅
       await Auth.signUp({ username: email, password });
       goto('/auth/confirm?email=' + encodeURIComponent(email));
     } catch (err) {
