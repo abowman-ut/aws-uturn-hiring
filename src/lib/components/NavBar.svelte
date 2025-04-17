@@ -1,12 +1,16 @@
 <script>
 	import { page } from '$app/state';
 	import { goto } from '$app/navigation';
-	// import { authState } from '$lib/stores/auth';
-    import { authState } from '$lib/stores/auth.svelte.js';
-    
-	let activePage = $derived(page.url.pathname);
+    import { onMount } from 'svelte';
+    import { browser } from '$app/environment';
+    import { getAuthState } from '$lib/stores/auth.svelte.js';
+
+    let activePage = $derived(page.url.pathname);
 	let isDev = $state(import.meta.env.DEV);
 	let isMenuOpen = $state(false);
+
+	let isAuthenticated = $state(false);
+	let loading = $state(true);
 
 	function toggleMenu() {
 		isMenuOpen = !isMenuOpen;
@@ -14,11 +18,23 @@
 
 	async function handleLogout() {
 		try {
-			await authState.logout();
+			const auth = getAuthState();
+			await auth?.logout?.();
 		} catch (err) {
 			console.error('Logout failed:', err);
 		}
 	}
+
+    onMount(() => {
+		if (!browser) return;
+
+        const auth = getAuthState();
+		// isAuthenticated = $derived(() => auth?.isAuthenticated ?? false);
+		// loading = $derived(() => auth?.loading ?? true);
+        if (!auth) return;
+
+        loading = auth.loading; // ✅ just assign
+	});
 </script>
 
 <nav class="navbar navbar-expand-md">
@@ -41,28 +57,22 @@
         </button>
 
         <div class="collapse navbar-collapse {isMenuOpen ? 'show' : ''}" id="navbarNav">
-            {#if authState.isAuthenticated}
-                <ul class="navbar-nav me-auto">
-                    {@render navItem('Positions', '/positions', 'bi bi-list-ul')}
-                    {@render navItem('Candidates', '/candidates', 'bi bi-people')}
-                </ul>
-            {/if}
+            <ul class="navbar-nav me-auto">
+                {@render navItem('Positions', '/positions', 'bi bi-list-ul')}
+                {@render navItem('Candidates', '/candidates', 'bi bi-people')}
+            </ul>
             <ul class="navbar-nav">
-                {#if authState.isAuthenticated}
-                    <li class="nav-item">
-                        <button 
-                            class="nav-link" 
-                            onclick={handleLogout}
-                            disabled={authState.loading}
-                        >
-                            <i class="bi bi-box-arrow-right"></i>
-                            <span>{authState.loading ? 'Logging out...' : 'Logout'}</span>
-                        </button>
-                    </li>
-                {:else}
-                    {@render navItem('Login', '/auth/login', 'bi bi-box-arrow-in-right')}
-                {/if}
-                {#if isDev && authState.isAuthenticated}
+                <li class="nav-item">
+                    <button 
+                        class="nav-link" 
+                        onclick={handleLogout}
+                    >
+                        <i class="bi bi-box-arrow-right"></i>
+                        <span>Logout</span>
+                    </button>
+                </li>
+                <!-- {@render navItem('Login', '/auth/login', 'bi bi-box-arrow-in-right')} -->
+                {#if isDev}
                     {@render navItem('Profile', '/profile', 'bi bi-person')}
                     {@render navItem('Tests', '/tests', 'bi bi-clipboard-check')}
                 {/if}

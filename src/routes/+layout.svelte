@@ -1,16 +1,19 @@
 <script>
 	import 'bootstrap/dist/css/bootstrap.min.css';
 	import 'bootstrap-icons/font/bootstrap-icons.css';
-	import NavBar from "$lib/components/NavBar.svelte";
-	import { onMount, tick } from 'svelte';
+	import { onMount } from 'svelte';
 	import { browser } from '$app/environment';
 	import { applyColorVariables } from '$lib/utils/colors';
-	import { authState } from '$lib/stores/auth.svelte.js';
+	import { getAuthState } from '$lib/stores/auth.svelte.js';
 	import { page } from '$app/state';
-	import { Ticker } from 'svelte';
+	import NavBar from '$lib/components/NavBar.svelte';
 
 	let { children } = $props();
 	let currentPage = $state(page);
+
+	let authState = $state(null);
+	let publicRoutes = ['/auth/login', '/auth/signup', '/auth/confirm'];
+	let currentPath = $state('');
 
 	onMount(async () => {
 		if (!browser) return;
@@ -22,30 +25,20 @@
 		await configureAmplify();
 		console.log('🟢 Amplify configured');
 
-		// Only now call auth logic
-		await tick();
-		await authState.checkAuth();
-
-		// Optionally confirm the user (for debug)
-		try {
-			const { Auth } = await import('aws-amplify');
-			const user = await Auth.currentAuthenticatedUser();
-			console.log("✅ Authenticated:", user);
-		} catch (err) {
-			console.error("🔥 Auth error:", err);
-		}
+		authState = getAuthState();
+		await authState?.checkAuth();
 	});
 
-	// Watch for path changes
 	$effect(() => {
 		if (browser) {
-			console.log('Path changed:', currentPage.url.pathname);
-			authState.updatePath(currentPage.url.pathname);
+			currentPath = currentPage.url.pathname;
+			authState?.updatePath(currentPath);
+			console.log('Path changed:', currentPath);
 		}
 	});
 </script>
 
-{#if !authState.loading || ['/auth/login', '/auth/signup', '/auth/confirm'].includes(currentPage.url.pathname)}
+{#if authState && (!authState.loading || publicRoutes.includes(currentPath))}
 	<NavBar />
 	<main class="main-content">
 		{@render children()}
@@ -57,23 +50,3 @@
 		</div>
 	</div>
 {/if}
-
-<style>
-	:global(body) {
-		background-color: #f8fafc !important;
-		color: #334155;
-	}
-
-	.main-content {
-		min-height: calc(100vh - 56px);
-		padding: 0.5rem;
-		max-width: 1400px;
-		margin: 0 auto;
-	}
-
-	@media (max-width: 767.98px) {
-		.main-content {
-			padding: 1rem;
-		}
-	}
-</style>
