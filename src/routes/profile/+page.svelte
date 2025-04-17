@@ -45,10 +45,10 @@
                         </div>
                         
                         <div class="mb-4">
-                            <div class="text-muted mb-1">Account Created</div>
+                            <!-- <div class="text-muted mb-1">Account Created</div>
                             <div class="form-control bg-light">
                                 {new Date(user.attributes.created_at).toLocaleDateString()}
-                            </div>
+                            </div> -->
                         </div>
                     </div>
                 </div>

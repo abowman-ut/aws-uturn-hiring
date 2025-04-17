@@ -7,36 +7,38 @@
 	import { applyColorVariables } from '$lib/utils/colors';
 	import { authState } from '$lib/stores/auth.svelte.js';
 	import { page } from '$app/state';
-	// import '$lib/amplify';
 
 	let { children } = $props();
 	let currentPage = $state(page);
 
-	// Initialize auth state on mount
-	if (browser) {
-		console.log('Initializing layout...');
+	onMount(async () => {
+		if (!browser) return;
+
+		console.log('🟡 Initializing layout...');
 		applyColorVariables();
-		authState.checkAuth();
-	}
+
+		const { configureAmplify } = await import('$lib/amplify-client.js');
+		await configureAmplify();
+		console.log('🟢 Amplify configured');
+
+		// Only now call auth logic
+		await authState.checkAuth();
+
+		// Optionally confirm the user (for debug)
+		try {
+			const { Auth } = await import('aws-amplify');
+			const user = await Auth.currentAuthenticatedUser();
+			console.log("✅ Authenticated:", user);
+		} catch (err) {
+			console.error("🔥 Auth error:", err);
+		}
+	});
 
 	// Watch for path changes
 	$effect(() => {
 		if (browser) {
 			console.log('Path changed:', currentPage.url.pathname);
 			authState.updatePath(currentPage.url.pathname);
-		}
-	});
-	
-	onMount(async () => {
-		const { configureAmplify } = await import('$lib/amplify-client.js');
-		await configureAmplify();
-
-		const { Auth } = await import('aws-amplify');
-		try {
-			const user = await Auth.currentAuthenticatedUser();
-			console.log("✅ Authenticated:", user);
-		} catch (err) {
-			console.error("🔥 Auth error:", err);
 		}
 	});
 </script>
