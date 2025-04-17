@@ -2,11 +2,12 @@
 	import 'bootstrap/dist/css/bootstrap.min.css';
 	import 'bootstrap-icons/font/bootstrap-icons.css';
 	import NavBar from "$lib/components/NavBar.svelte";
-	import { onMount } from 'svelte';
+	import { onMount, tick } from 'svelte';
 	import { browser } from '$app/environment';
 	import { applyColorVariables } from '$lib/utils/colors';
 	import { authState } from '$lib/stores/auth.svelte.js';
 	import { page } from '$app/state';
+	import { Ticker } from 'svelte';
 
 	let { children } = $props();
 	let currentPage = $state(page);
@@ -22,6 +23,7 @@
 		console.log('🟢 Amplify configured');
 
 		// Only now call auth logic
+		await tick();
 		await authState.checkAuth();
 
 		// Optionally confirm the user (for debug)
