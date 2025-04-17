@@ -9,8 +9,8 @@
 	let isDev = $state(import.meta.env.DEV);
 	let isMenuOpen = $state(false);
 
-	let isAuthenticated = $state(false);
-	let loading = $state(true);
+	// let isAuthenticated = $state(false);
+	// let loading = $state(true);
 
 	function toggleMenu() {
 		isMenuOpen = !isMenuOpen;
@@ -32,8 +32,6 @@
 		// isAuthenticated = $derived(() => auth?.isAuthenticated ?? false);
 		// loading = $derived(() => auth?.loading ?? true);
         if (!auth) return;
-
-        loading = auth.loading; // ✅ just assign
 	});
 </script>
 
@@ -45,6 +43,7 @@
             {#if isDev}
                 <span class="dev-indicator">dev</span>
             {/if}
+            {getAuthState()}
         </a>
         
         <button 

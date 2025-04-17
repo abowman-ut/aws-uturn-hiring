@@ -4,6 +4,8 @@
 	import { getAuthState } from '$lib/stores/auth.svelte.js';
 	import AuthLayout from '$lib/components/AuthLayout.svelte';
 	import AuthForm from '$lib/components/AuthForm.svelte';
+	import { redirect } from '@sveltejs/kit';
+	import { browser } from '$app/environment';	
 
 	let email = $state('');
 	let password = $state('');
@@ -56,6 +58,20 @@
 			goto('/');
 		}
 	});
+
+	export const load = async () => {
+		if (browser) return; // only redirect on server
+
+		try {
+			const { Auth } = await import('aws-amplify');
+			const user = await Auth.currentAuthenticatedUser();
+			if (user) {
+				throw redirect(302, '/');
+			}
+		} catch (err) {
+			// not authenticated → continue to login page
+		}
+	};
 </script>
 
 <AuthLayout title="Login">

@@ -26,7 +26,7 @@ class AuthStore {
 
 			if (publicRoutes.includes(this.currentPath)) {
 				console.log('🚀 Redirecting to /');
-				goto('/');
+				goto('/', { replaceState: true });
 			}
 		} catch {
 			this.isAuthenticated = false;
@@ -90,7 +90,7 @@ class AuthStore {
 }
 
 // ✅ SSR-safe dynamic singleton
-let instance;
+let instance = $state(null);
 
 export function getAuthState() {
 	if (typeof window === 'undefined') return null;
