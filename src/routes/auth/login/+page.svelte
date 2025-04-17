@@ -48,16 +48,16 @@
 		}
 	}
 
-	onMount(async () => {
-		const auth = getAuthState();
-		console.log('🔍 [Login Page] auth?.isAuthenticated =', auth?.isAuthenticated);
+	// onMount(async () => {
+	// 	const auth = getAuthState();
+	// 	console.log('🔍 [Login Page] auth?.isAuthenticated =', auth?.isAuthenticated);
 
-		await new Promise((r) => setTimeout(r, 100));
-		if (auth?.isAuthenticated) {
-			console.log("🚪 Already logged in — redirecting to /");
-			goto('/');
-		}
-	});
+	// 	await new Promise((r) => setTimeout(r, 100));
+	// 	if (auth?.isAuthenticated) {
+	// 		console.log("🚪 Already logged in — redirecting to /");
+	// 		goto('/');
+	// 	}
+	// });
 
 	export const load = async () => {
 		if (browser) return; // only redirect on server

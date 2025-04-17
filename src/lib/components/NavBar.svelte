@@ -43,7 +43,6 @@
             {#if isDev}
                 <span class="dev-indicator">dev</span>
             {/if}
-            {getAuthState()}
         </a>
         
         <button 
