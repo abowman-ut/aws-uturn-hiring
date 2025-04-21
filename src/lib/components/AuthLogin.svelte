@@ -53,48 +53,64 @@
 </script>
 
 <div>
-    <h2>{title}</h2>
+    <h2 class="h4 text-center mb-4">{title}</h2>
     
-    <form onsubmit={handleSubmit}>
-        {#if error}
-            <div>{error}</div>
-        {/if}
-        
-        <div>
-            <label for="email">{emailLabel}</label>
-            <input
-                type="email"
-                id="email"
-                bind:value={email}
-                placeholder="Enter your email"
-                required
-            />
+    {#if error}
+        <div class="alert alert-danger" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            {error}
+        </div>
+    {/if}
+    
+    <form onsubmit={handleSubmit} class="needs-validation text-center" novalidate>
+        <div class="mb-3">
+            <div class="input-group">
+                <span class="input-group-text">
+                    <i class="bi bi-envelope"></i>
+                </span>
+                <input
+                    type="email"
+                    id="email"
+                    class="form-control"
+                    bind:value={email}
+                    placeholder="Enter your email"
+                    required
+                />
+            </div>
         </div>
 
-        <div>
-            <label for="password">{passwordLabel}</label>
-            <input
-                type="password"
-                id="password"
-                bind:value={password}
-                placeholder="Enter your password"
-                required
-            />
+        <div class="mb-4">
+            <div class="input-group">
+                <span class="input-group-text">
+                    <i class="bi bi-lock"></i>
+                </span>
+                <input
+                    type="password"
+                    id="password"
+                    class="form-control"
+                    bind:value={password}
+                    placeholder="Enter your password"
+                    required
+                />
+            </div>
         </div>
 
-        <div>
+        <div class="d-grid gap-2">
             <BtnAuthSignIn
                 onClick={handleSubmit}
                 text={submitButtonText}
                 loading={loading}
                 loadingText={loadingText}
+                context="auth"
             />
 
             {#if showSignUp}
                 <button
                     type="button"
+                    class="btn btn-outline-primary"
                     onclick={onSignUp}
                 >
+                    <i class="bi bi-person-plus me-2"></i>
                     {signUpText}
                 </button>
             {/if}

@@ -76,37 +76,50 @@
 </script>
 
 <div>
-    <h2>{title}</h2>
+    <h2 class="h4 text-center mb-4">{title}</h2>
+
+    {#if error}
+        <div class="alert alert-danger" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            {error}
+        </div>
+    {/if}
 
     {#if !showConfirmation}
-        <form onsubmit={handleSubmit}>
-            {#if error}
-                <div>{error}</div>
-            {/if}
-            
-            <div>
-                <label for="email">{emailLabel}</label>
-                <input
-                    type="email"
-                    id="email"
-                    bind:value={email}
-                    required
-                    placeholder="Enter your email"
-                />
+        <form onsubmit={handleSubmit} class="needs-validation" novalidate>
+            <div class="mb-3">
+                <div class="input-group">
+                    <span class="input-group-text">
+                        <i class="bi bi-envelope"></i>
+                    </span>
+                    <input
+                        type="email"
+                        id="email"
+                        class="form-control"
+                        bind:value={email}
+                        required
+                        placeholder="Enter your email"
+                    />
+                </div>
             </div>
 
-            <div>
-                <label for="password">{passwordLabel}</label>
-                <input
-                    type="password"
-                    id="password"
-                    bind:value={password}
-                    required
-                    placeholder="Enter your password"
-                />
+            <div class="mb-4">
+                <div class="input-group">
+                    <span class="input-group-text">
+                        <i class="bi bi-lock"></i>
+                    </span>
+                    <input
+                        type="password"
+                        id="password"
+                        class="form-control"
+                        bind:value={password}
+                        required
+                        placeholder="Enter your password"
+                    />
+                </div>
             </div>
 
-            <div>
+            <div class="d-grid gap-2">
                 <BtnAuthSignUp
                     onClick={handleSubmit}
                     text={submitButtonText}
@@ -116,23 +129,24 @@
             </div>
         </form>
     {:else}
-        <form onsubmit={handleConfirmation}>
-            {#if error}
-                <div>{error}</div>
-            {/if}
-            
-            <div>
-                <label for="code">{codeLabel}</label>
-                <input
-                    type="text"
-                    id="code"
-                    bind:value={confirmationCode}
-                    required
-                    placeholder="Enter your confirmation code"
-                />
+        <form onsubmit={handleConfirmation} class="needs-validation" novalidate>
+            <div class="mb-4">
+                <div class="input-group">
+                    <span class="input-group-text">
+                        <i class="bi bi-shield-check"></i>
+                    </span>
+                    <input
+                        type="text"
+                        id="code"
+                        class="form-control"
+                        bind:value={confirmationCode}
+                        required
+                        placeholder="Enter your confirmation code"
+                    />
+                </div>
             </div>
 
-            <div>
+            <div class="d-grid gap-2">
                 <BtnAuthSignUp
                     onClick={handleConfirmation}
                     text={confirmButtonText}
@@ -143,12 +157,16 @@
         </form>
     {/if}
 
-    <div>
-        <button
-            type="button"
-            onclick={onToggleSignIn}
-        >
-            {signInText}
-        </button>
+    <div class="text-center mt-4">
+        <div class="d-grid gap-2">
+            <button
+                type="button"
+                class="btn btn-outline-primary"
+                onclick={onToggleSignIn}
+            >
+                <i class="bi bi-arrow-left-right me-2"></i>
+                {signInText}
+            </button>
+        </div>
     </div>
 </div> 

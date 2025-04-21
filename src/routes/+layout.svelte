@@ -31,7 +31,7 @@
 </script>
 
 <NavBar />
-<div>
+<!-- <div>
     {#if $isAuthenticated}
         <a href="/dashboard">Dashboard</a> |
         <BtnAuthSignOut
@@ -45,7 +45,7 @@
             text="Sign In"
         />
     {/if}
-</div>
+</div> -->
 <main class="main-content">
 	{@render children()}
 </main>

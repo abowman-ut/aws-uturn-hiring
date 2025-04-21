@@ -1,5 +1,7 @@
 <script>
 	import { page } from '$app/state';
+    import { isAuthenticated, signOutUser } from '$lib/stores/auth';
+    import BtnAuthSignOut from './BtnAuthSignOut.svelte';
     
 	let activePage = $derived(page.url.pathname);
 	let isDev = $state(import.meta.env.DEV);
@@ -8,6 +10,11 @@
 	function toggleMenu() {
 		isMenuOpen = !isMenuOpen;
 	}
+
+    async function handleSignOut() {
+        await signOutUser();
+        isMenuOpen = false;
+    }
 </script>
 
 <nav class="navbar navbar-expand-md">
@@ -35,9 +42,19 @@
                 {@render navItem('Candidates', '/candidates', 'bi bi-people')}
             </ul>
             <ul class="navbar-nav">
+                {@render navItem('Profile', '/profile', 'bi bi-person')}
                 {#if isDev}
-                    {@render navItem('Profile', '/profile', 'bi bi-person')}
                     {@render navItem('Tests', '/tests', 'bi bi-clipboard-check')}
+                {/if}
+                {#if isAuthenticated}
+                    <li class="nav-item">
+                        <BtnAuthSignOut
+                            onClick={handleSignOut}
+                            showUsername={true}
+                        />
+                    </li>
+                {:else}
+                    {@render navItem('Sign In', '/auth', 'bi bi-box-arrow-in-right')}
                 {/if}
             </ul>
         </div>
@@ -108,6 +125,7 @@
         gap: 0.5rem;
         font-size: 0.9375rem;
         transition: all 0.2s ease;
+        cursor: pointer;
     }
 
     .nav-icon {
@@ -117,6 +135,7 @@
 
     .nav-link:hover {
         color: white;
+        text-decoration: none;
     }
 
     .nav-link.active {
