@@ -38,15 +38,21 @@
 
         <div class="collapse navbar-collapse {isMenuOpen ? 'show' : ''}" id="navbarNav">
             <ul class="navbar-nav me-auto">
-                {@render navItem('Positions', '/positions', 'bi bi-list-ul')}
-                {@render navItem('Candidates', '/candidates', 'bi bi-people')}
+                {#if $isAuthenticated}
+                    {@render navItem('Positions', '/positions', 'bi bi-list-ul')}
+                    {@render navItem('Candidates', '/candidates', 'bi bi-people')}
+                {/if}
             </ul>
             <ul class="navbar-nav">
-                {@render navItem('Profile', '/profile', 'bi bi-person')}
-                {#if isDev}
-                    {@render navItem('Tests', '/tests', 'bi bi-clipboard-check')}
+                {#if $isAuthenticated}
+                    {@render navItem('Profile', '/profile', 'bi bi-person')}
                 {/if}
-                {#if isAuthenticated}
+                {#if $isAuthenticated}
+                    {#if isDev}
+                        {@render navItem('Tests', '/tests', 'bi bi-clipboard-check')}
+                    {/if}
+                {/if}
+                {#if $isAuthenticated}
                     <li class="nav-item">
                         <BtnAuthSignOut
                             onClick={handleSignOut}

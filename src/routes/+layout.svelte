@@ -31,21 +31,6 @@
 </script>
 
 <NavBar />
-<!-- <div>
-    {#if $isAuthenticated}
-        <a href="/dashboard">Dashboard</a> |
-        <BtnAuthSignOut
-            onClick={signOutUser}
-            showUsername={true}
-            username={$user?.signInDetails?.loginId}
-        />
-    {:else}
-        <BtnAuthSignIn
-            onClick={() => goto('/auth')}
-            text="Sign In"
-        />
-    {/if}
-</div> -->
 <main class="main-content">
 	{@render children()}
 </main>
