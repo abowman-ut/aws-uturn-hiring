@@ -41,7 +41,8 @@
         } catch (e) {
             console.error('❌ Login error:', { error: e });
             if (e.message.includes('Incorrect username or password')) {
-                error = 'Incorrect email or password. Please try again or sign up if you don\'t have an account.';
+                // error = 'Incorrect email or password. Please try again or sign up if you don\'t have an account.';
+                                error = 'Incorrect email or password.';
             } else {
                 error = e.message || 'An error occurred during sign in';
             }
@@ -104,16 +105,16 @@
                 context="auth"
             />
 
-            {#if showSignUp}
-                <button
+            <!-- {#if showSignUp} -->
+                <!-- <button
                     type="button"
                     class="btn btn-outline-primary"
                     onclick={onSignUp}
                 >
                     <i class="bi bi-person-plus me-2"></i>
                     {signUpText}
-                </button>
-            {/if}
+                </button> -->
+            <!-- {/if} -->
         </div>
     </form>
 </div> 

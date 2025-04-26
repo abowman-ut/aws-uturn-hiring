@@ -157,7 +157,7 @@
         </form>
     {/if}
 
-    <div class="text-center mt-4">
+    <div class="text-center mt-2">
         <div class="d-grid gap-2">
             <button
                 type="button"
