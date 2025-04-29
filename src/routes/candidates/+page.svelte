@@ -569,7 +569,7 @@
                                 <div class="col-12">
                                     <div class="select-wrapper">
                                         <i class="bi bi-list-ul select-icon"></i>
-                                        <select class="form-select ps-4" bind:value={newCandidate.positionId} required>
+                                        <select class="form-select ps-4" bind:value={newCandidate.positionId} required aria-label="Position">
                                             <option value="">&nbsp;&nbsp;Position *</option>
                                             {#each positions.filter(p => p.state === 'open') as position}
                                                 <option value={position.id}>&nbsp;&nbsp;{position.title}</option>
@@ -585,6 +585,7 @@
                                         bind:value={newCandidate.name}
                                         placeholder="Name *"
                                         required
+                                        aria-label="Name"
                                     />
                                 </div>
 
@@ -599,6 +600,7 @@
                                             class="form-control {emailError ? 'is-invalid' : ''}"
                                             bind:value={newCandidate.email}
                                             placeholder="Email"
+                                            aria-label="Email"
                                         />
                                     </div>
                                     {#if emailError}
@@ -619,6 +621,7 @@
                                             class="form-control"
                                             bind:value={newCandidate.phone}
                                             placeholder="Phone"
+                                            aria-label="Phone"
                                         />
                                     </div>
                                 </div>
@@ -634,6 +637,7 @@
                                             class="form-control"
                                             bind:value={newCandidate.expectedSalary.amount}
                                             placeholder="Expected Pay"
+                                            aria-label="Expected Pay"
                                         />
                                     </div>
                                 </div>
@@ -648,6 +652,7 @@
                                             class="form-select" 
                                             bind:value={newCandidate.source} 
                                             required
+                                            aria-label="Source"
                                         >
                                             <option value="">Source *</option>
                                             <option value="recruiter">Recruiter</option>
@@ -673,6 +678,7 @@
                                                 class="form-control"
                                                 bind:value={newCandidate.sourceName}
                                                 placeholder="Source Contact"
+                                                aria-label="Source Contact"
                                             />
                                         </div>
                                     </div>
@@ -689,6 +695,7 @@
                                             class="form-control"
                                             bind:value={newCandidate.linkedin}
                                             placeholder="Profile URL"
+                                            aria-label="LinkedIn Profile URL"
                                         />
                                     </div>
                                 </div>
@@ -713,6 +720,7 @@
                                                 handleResumeUpload(e);
                                             }}
                                             disabled={isUploading}
+                                            aria-label="Upload resume"
                                         />
                                         {#if isUploading}
                                             <span class="input-group-text text-info py-0">
@@ -765,7 +773,7 @@
                             <div class="col-12">
                                 <div class="select-wrapper">
                                     <i class="bi bi-list-ul select-icon"></i>
-                                    <select class="form-select ps-4" bind:value={newCandidate.positionId} required>
+                                    <select class="form-select ps-4" bind:value={newCandidate.positionId} required aria-label="Position">
                                         <option value="">&nbsp;&nbsp;Position *</option>
                                         {#each positions.filter(p => p.state === 'open') as position}
                                             <option value={position.id}>&nbsp;&nbsp;{position.title}</option>
@@ -781,20 +789,22 @@
                                     bind:value={newCandidate.name}
                                     placeholder="Name *"
                                     required
+                                    aria-label="Name"
                                 />
                             </div>
 
                             <div class="col-12">
                                 <div class="input-group">
-                                    <label class="input-group-text py-0" for="email-input-2">
+                                    <label class="input-group-text py-0" for="email-input">
                                         <i class="bi bi-envelope"></i>
                                     </label>
                                     <input 
-                                        id="email-input-2"
+                                        id="email-input"
                                         type="email" 
                                         class="form-control {emailError ? 'is-invalid' : ''}"
                                         bind:value={newCandidate.email}
                                         placeholder="Email"
+                                        aria-label="Email"
                                     />
                                 </div>
                                 {#if emailError}
@@ -806,44 +816,47 @@
 
                             <div class="col-12">
                                 <div class="input-group">
-                                    <label class="input-group-text py-0" for="phone-input-2">
+                                    <label class="input-group-text py-0" for="phone-input">
                                         <i class="bi bi-telephone"></i>
                                     </label>
                                     <input 
-                                        id="phone-input-2"
+                                        id="phone-input"
                                         type="tel" 
                                         class="form-control"
                                         bind:value={newCandidate.phone}
                                         placeholder="Phone"
+                                        aria-label="Phone"
                                     />
                                 </div>
                             </div>
 
                             <div class="col-12">
                                 <div class="input-group">
-                                    <label class="input-group-text py-0" for="salary-input-2">
+                                    <label class="input-group-text py-0" for="salary-input">
                                         <i class="bi bi-cash"></i>
                                     </label>
                                     <input 
-                                        id="salary-input-2"
+                                        id="salary-input"
                                         type="number" 
                                         class="form-control"
                                         bind:value={newCandidate.expectedSalary.amount}
                                         placeholder="Expected Pay"
+                                        aria-label="Expected Pay"
                                     />
                                 </div>
                             </div>
 
                             <div class="col-12">
                                 <div class="input-group">
-                                    <label class="input-group-text py-0" for="source-input-2">
+                                    <label class="input-group-text py-0" for="source-input">
                                         <i class="bi bi-person-bounding-box"></i>
                                     </label>
                                     <select 
-                                        id="source-input-2"
+                                        id="source-input"
                                         class="form-select" 
                                         bind:value={newCandidate.source} 
                                         required
+                                        aria-label="Source"
                                     >
                                         <option value="">Source *</option>
                                         <option value="recruiter">Recruiter</option>
@@ -860,15 +873,16 @@
                             {#if newCandidate.source}
                                 <div class="col-12">
                                     <div class="input-group">
-                                        <label class="input-group-text py-0" for="source-contact-input-2">
+                                        <label class="input-group-text py-0" for="source-contact-input">
                                             <i class="bi bi-person-bounding-box"></i>
                                         </label>
                                         <input 
-                                            id="source-contact-input-2"
+                                            id="source-contact-input"
                                             type="text" 
                                             class="form-control"
                                             bind:value={newCandidate.sourceName}
                                             placeholder="Source Contact"
+                                            aria-label="Source Contact"
                                         />
                                     </div>
                                 </div>
@@ -876,15 +890,16 @@
 
                             <div class="col-12">
                                 <div class="input-group">
-                                    <label class="input-group-text py-0" for="linkedin-input-2">
+                                    <label class="input-group-text py-0" for="linkedin-input">
                                         <i class="bi bi-linkedin"></i>
                                     </label>
                                     <input 
-                                        id="linkedin-input-2"
+                                        id="linkedin-input"
                                         type="text" 
                                         class="form-control"
                                         bind:value={newCandidate.linkedin}
                                         placeholder="Profile URL"
+                                        aria-label="LinkedIn Profile URL"
                                     />
                                 </div>
                             </div>
@@ -1144,7 +1159,15 @@
                                     <i class="bi bi-list-ul"></i>
                                     {getFilteredCandidates().length} of {candidates.length}
                                 </span>
-                                <span class="badge border border-secondary text-secondary d-flex align-items-center gap-1 mt-1" style="cursor: pointer;" onclick={toggleCompactView}>
+                                <span 
+                                    class="badge border border-secondary text-secondary d-flex align-items-center gap-1 mt-1" 
+                                    style="cursor: pointer;" 
+                                    onclick={toggleCompactView} 
+                                    onkeydown={(e) => e.key === 'Enter' && toggleCompactView()} 
+                                    role="button" 
+                                    aria-label="Toggle compact view"
+                                    tabindex="0"
+                                >
                                     <i class="bi bi-arrow-bar-{isCompactView ? 'right' : 'left'}"></i>
                                     <i class="bi bi-gear-fill"></i>
                                 </span>
@@ -1283,19 +1306,22 @@
                                                                 bind:value={editingCandidate.name}
                                                                 placeholder="Name *"
                                                                 required
+                                                                aria-label="Edit name"
                                                             />
                                                         </div>
 
                                                         <div class="col-12">
                                                             <div class="input-group">
-                                                                <label class="input-group-text py-0">
+                                                                <label class="input-group-text py-0" for="edit-email">
                                                                     <i class="bi bi-envelope"></i>
                                                                 </label>
                                                                 <input 
+                                                                    id="edit-email"
                                                                     type="email" 
                                                                     class="form-control {emailError ? 'is-invalid' : ''}"
                                                                     bind:value={editingCandidate.email}
                                                                     placeholder="Email"
+                                                                    aria-label="Edit email"
                                                                 />
                                                             </div>
                                                             {#if emailError}
@@ -1307,57 +1333,73 @@
 
                                                         <div class="col-12">
                                                             <div class="input-group">
-                                                                <label class="input-group-text py-0">
+                                                                <label class="input-group-text py-0" for="edit-phone">
                                                                     <i class="bi bi-telephone"></i>
                                                                 </label>
                                                                 <input 
+                                                                    id="edit-phone"
                                                                     type="tel" 
                                                                     class="form-control"
                                                                     bind:value={editingCandidate.phone}
                                                                     placeholder="Phone"
+                                                                    aria-label="Edit phone"
                                                                 />
                                                             </div>
                                                         </div>
 
                                                         <div class="col-12">
                                                             <div class="input-group">
-                                                                <label class="input-group-text py-0">
+                                                                <label class="input-group-text py-0" for="edit-salary">
                                                                     <i class="bi bi-cash"></i>
                                                                 </label>
                                                                 <input 
+                                                                    id="edit-salary"
                                                                     type="number" 
                                                                     class="form-control"
                                                                     bind:value={editingCandidate.expectedSalary.amount}
                                                                     placeholder="Expected Pay"
+                                                                    aria-label="Edit expected pay"
                                                                 />
                                                             </div>
                                                         </div>
 
                                                         <div class="col-12">
                                                             <div class="input-group">
-                                                                <label class="input-group-text py-0">
+                                                                <label class="input-group-text py-0" for="edit-linkedin">
                                                                     <i class="bi bi-linkedin"></i>
                                                                 </label>
                                                                 <input 
+                                                                    id="edit-linkedin"
                                                                     type="text" 
                                                                     class="form-control"
                                                                     bind:value={editingCandidate.linkedin}
                                                                     placeholder="Profile URL"
+                                                                    aria-label="Edit LinkedIn profile URL"
                                                                 />
                                                             </div>
                                                         </div>
 
                                                         <div class="col-12">
                                                             <div class="input-group">
-                                                                <label class="input-group-text py-0">
+                                                                <label for="edit-resume" class="input-group-text py-0">
                                                                     <i class="bi bi-file-text"></i>
                                                                 </label>
                                                                 <input 
+                                                                    id="edit-resume"
                                                                     type="file" 
                                                                     class="form-control" 
                                                                     accept=".pdf,.doc,.docx"
-                                                                    onchange={handleEditResumeUpload}
+                                                                    onchange={(e) => {
+                                                                        const file = e.target.files[0];
+                                                                        if (file) {
+                                                                            e.target.dataset.filename = file.name;
+                                                                        } else {
+                                                                            delete e.target.dataset.filename;
+                                                                        }
+                                                                        handleEditResumeUpload(e);
+                                                                    }}
                                                                     disabled={isUploading}
+                                                                    aria-label="Edit resume"
                                                                 />
                                                                 {#if isUploading}
                                                                     <span class="input-group-text text-info py-0">
@@ -1730,6 +1772,14 @@
     }
     .btn-outline-success:hover i {
         color: var(--bs-success) !important;
+    }
+
+    /* Add matching hover effect for resume button */
+    .btn-outline-dark:hover {
+        background-color: rgba(108, 117, 125, 0.1);
+    }
+    .btn-outline-dark:hover i {
+        color: #212529 !important; /* Bootstrap's default dark color */
     }
 
     @keyframes spin {
