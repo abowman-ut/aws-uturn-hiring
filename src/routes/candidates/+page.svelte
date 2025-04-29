@@ -27,6 +27,8 @@
     let activeDropdown = $state(null);
     let emailError = $state('');  // Add state for email validation error
     let windowWidth = $state(0);  // Add window width state
+    let editingCandidate = $state(null);  // Add state for editing candidate
+    let editFormError = $state(null);  // Add state for edit form errors
 
     // Form data
     let newCandidate = $state({
@@ -398,6 +400,110 @@
     // Function to toggle dropdown
     function toggleDropdown(dropdown) {
         activeDropdown = activeDropdown === dropdown ? null : dropdown;
+    }
+
+    // Add function to handle edit button click
+    function handleEditClick(candidate) {
+        editingCandidate = {
+            ...candidate,
+            expectedSalary: {
+                amount: candidate.expectedSalary?.amount || '',
+                currency: candidate.expectedSalary?.currency || 'USD'
+            }
+        };
+    }
+
+    // Add function to handle edit form submission
+    async function handleEditSubmit(e) {
+        e.preventDefault();
+        isSubmitting = true;
+        editFormError = null;
+        emailError = '';
+
+        // Validate email if provided
+        if (editingCandidate.email && !validateEmail(editingCandidate.email)) {
+            emailError = 'Please enter a valid email address';
+            isSubmitting = false;
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/candidates?id=${editingCandidate.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    ...editingCandidate,
+                    expectedSalary: editingCandidate.expectedSalary.amount ? {
+                        ...editingCandidate.expectedSalary,
+                        amount: Number(editingCandidate.expectedSalary.amount)
+                    } : null
+                })
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || 'Failed to update candidate');
+            }
+
+            const updatedCandidate = await response.json();
+            updateCandidate(updatedCandidate);
+            editingCandidate = null;
+        } catch (error) {
+            editFormError = error.message;
+        } finally {
+            isSubmitting = false;
+        }
+    }
+
+    // Add function to handle resume upload for edit form
+    async function handleEditResumeUpload(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        isUploading = true;
+        uploadError = null;
+
+        try {
+            const response = await fetch('/api/candidates/resume', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    filename: file.name,
+                    contentType: file.type
+                })
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || 'Failed to get upload URL');
+            }
+
+            const { uploadUrl, fileUrl, key } = await response.json();
+
+            const uploadResponse = await fetch(uploadUrl, {
+                method: 'PUT',
+                body: file,
+                headers: {
+                    'Content-Type': file.type
+                }
+            });
+
+            if (!uploadResponse.ok) {
+                throw new Error(`Upload failed with status: ${uploadResponse.status}`);
+            }
+
+            editingCandidate.resume = {
+                url: fileUrl,
+                filename: file.name,
+                key: key
+            };
+
+            isUploading = false;
+        } catch (error) {
+            console.error('Error uploading resume:', error);
+            uploadError = error.message || 'Failed to upload resume. Please try again.';
+            isUploading = false;
+        }
     }
 </script>
 
@@ -1119,6 +1225,14 @@
                                                         </button>
                                                     {/if}
                                                     <button 
+                                                        class="btn btn-outline-primary btn-sm"
+                                                        onclick={() => handleEditClick(candidate)}
+                                                        title="Edit candidate"
+                                                        aria-label="Edit {candidate.name}"
+                                                    >
+                                                        <i class="bi bi-pencil-square"></i>
+                                                    </button>
+                                                    <button 
                                                         class="btn btn-outline-danger btn-sm"
                                                         onclick={() => deleteCandidate(candidate.id)}
                                                         title="Delete candidate"
@@ -1156,6 +1270,141 @@
                                                     candidate={candidate} 
                                                     onUpdate={updateCandidate}
                                                 />
+                                            </div>
+                                        {/if}
+
+                                        {#if editingCandidate?.id === candidate.id}
+                                            <div class="border-top pt-3 mt-3" transition:slide={{ duration: 300 }}>
+                                                <form onsubmit={handleEditSubmit}>
+                                                    <div class="row g-3">
+                                                        <div class="col-12">
+                                                            <input 
+                                                                type="text" 
+                                                                class="form-control"
+                                                                bind:value={editingCandidate.name}
+                                                                placeholder="Name *"
+                                                                required
+                                                            />
+                                                        </div>
+
+                                                        <div class="col-12">
+                                                            <div class="input-group">
+                                                                <label class="input-group-text py-0">
+                                                                    <i class="bi bi-envelope"></i>
+                                                                </label>
+                                                                <input 
+                                                                    type="email" 
+                                                                    class="form-control {emailError ? 'is-invalid' : ''}"
+                                                                    bind:value={editingCandidate.email}
+                                                                    placeholder="Email"
+                                                                />
+                                                            </div>
+                                                            {#if emailError}
+                                                                <div class="invalid-feedback">
+                                                                    {emailError}
+                                                                </div>
+                                                            {/if}
+                                                        </div>
+
+                                                        <div class="col-12">
+                                                            <div class="input-group">
+                                                                <label class="input-group-text py-0">
+                                                                    <i class="bi bi-telephone"></i>
+                                                                </label>
+                                                                <input 
+                                                                    type="tel" 
+                                                                    class="form-control"
+                                                                    bind:value={editingCandidate.phone}
+                                                                    placeholder="Phone"
+                                                                />
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="col-12">
+                                                            <div class="input-group">
+                                                                <label class="input-group-text py-0">
+                                                                    <i class="bi bi-cash"></i>
+                                                                </label>
+                                                                <input 
+                                                                    type="number" 
+                                                                    class="form-control"
+                                                                    bind:value={editingCandidate.expectedSalary.amount}
+                                                                    placeholder="Expected Pay"
+                                                                />
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="col-12">
+                                                            <div class="input-group">
+                                                                <label class="input-group-text py-0">
+                                                                    <i class="bi bi-linkedin"></i>
+                                                                </label>
+                                                                <input 
+                                                                    type="text" 
+                                                                    class="form-control"
+                                                                    bind:value={editingCandidate.linkedin}
+                                                                    placeholder="Profile URL"
+                                                                />
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="col-12">
+                                                            <div class="input-group">
+                                                                <label class="input-group-text py-0">
+                                                                    <i class="bi bi-file-text"></i>
+                                                                </label>
+                                                                <input 
+                                                                    type="file" 
+                                                                    class="form-control" 
+                                                                    accept=".pdf,.doc,.docx"
+                                                                    onchange={handleEditResumeUpload}
+                                                                    disabled={isUploading}
+                                                                />
+                                                                {#if isUploading}
+                                                                    <span class="input-group-text text-info py-0">
+                                                                        <i class="bi bi-arrow-repeat small spinning"></i>
+                                                                    </span>
+                                                                {:else if uploadError}
+                                                                    <span class="input-group-text text-danger py-0">
+                                                                        <i class="bi bi-exclamation-circle small"></i>
+                                                                    </span>
+                                                                {:else if editingCandidate.resume}
+                                                                    <span class="input-group-text text-success py-0">
+                                                                        <i class="bi bi-check-circle small"></i>
+                                                                    </span>
+                                                                {/if}
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="col-12">
+                                                            <div class="d-flex justify-content-end gap-2">
+                                                                <button 
+                                                                    type="button" 
+                                                                    class="btn btn-secondary" 
+                                                                    onclick={() => editingCandidate = null}
+                                                                >
+                                                                    Cancel
+                                                                </button>
+                                                                <button 
+                                                                    type="submit" 
+                                                                    class="btn btn-primary" 
+                                                                    disabled={isSubmitting}
+                                                                >
+                                                                    {isSubmitting ? 'Saving...' : 'Save'}
+                                                                </button>
+                                                            </div>
+                                                        </div>
+
+                                                        {#if editFormError}
+                                                            <div class="col-12">
+                                                                <div class="alert alert-danger">
+                                                                    <i class="bi bi-exclamation-circle-fill me-2"></i>
+                                                                    {editFormError}
+                                                                </div>
+                                                            </div>
+                                                        {/if}
+                                                    </div>
+                                                </form>
                                             </div>
                                         {/if}
                                     </div>
