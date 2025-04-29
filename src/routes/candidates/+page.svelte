@@ -29,6 +29,7 @@
     let windowWidth = $state(0);  // Add window width state
     let editingCandidate = $state(null);  // Add state for editing candidate
     let editFormError = $state(null);  // Add state for edit form errors
+    let isCompactView = $state(false);  // Add state for compact view
 
     // Form data
     let newCandidate = $state({
@@ -504,6 +505,12 @@
             uploadError = error.message || 'Failed to upload resume. Please try again.';
             isUploading = false;
         }
+    }
+
+    // Add function to toggle compact view
+    function toggleCompactView() {
+        isCompactView = !isCompactView;
+        console.log('Compact view:', isCompactView); // Debug log
     }
 </script>
 
@@ -1132,10 +1139,14 @@
                             </button>
                             
                             <!-- Candidate count - always visible on lg screens -->
-                            <div class="d-flex align-items-center text-muted small" class:d-none={!showFilters && windowWidth < 992}>
+                            <div class="d-flex flex-column align-items-end text-muted small" class:d-none={!showFilters && windowWidth < 992}>
                                 <span class="badge border border-secondary text-secondary d-flex align-items-center gap-1">
                                     <i class="bi bi-list-ul"></i>
                                     {getFilteredCandidates().length} of {candidates.length}
+                                </span>
+                                <span class="badge border border-secondary text-secondary d-flex align-items-center gap-1 mt-1" style="cursor: pointer;" onclick={toggleCompactView}>
+                                    <i class="bi bi-arrow-bar-{isCompactView ? 'right' : 'left'}"></i>
+                                    <i class="bi bi-gear-fill"></i>
                                 </span>
                             </div>
                         </div>
@@ -1152,7 +1163,11 @@
                             </div>
                         {:else}
                             {#each getFilteredCandidates() as candidate}
-                                <div class="card mb-3" in:fade>
+                                <div 
+                                    class="card mb-3" 
+                                    in:fade 
+                                    class:compact={isCompactView}
+                                >
                                     <div class="card-body">
                                         <div class="d-flex justify-content-between align-items-start mb-3">
                                             <div>
@@ -1224,22 +1239,6 @@
                                                             <i class="bi bi-file-text"></i>
                                                         </button>
                                                     {/if}
-                                                    <button 
-                                                        class="btn btn-outline-primary btn-sm"
-                                                        onclick={() => handleEditClick(candidate)}
-                                                        title="Edit candidate"
-                                                        aria-label="Edit {candidate.name}"
-                                                    >
-                                                        <i class="bi bi-pencil-square"></i>
-                                                    </button>
-                                                    <button 
-                                                        class="btn btn-outline-danger btn-sm"
-                                                        onclick={() => deleteCandidate(candidate.id)}
-                                                        title="Delete candidate"
-                                                        aria-label="Delete {candidate.name}"
-                                                    >
-                                                        <i class="bi bi-trash"></i>
-                                                    </button>
                                                 </div>
                                                 <div class="d-flex align-items-center gap-3 mt-2 d-none d-lg-flex">
                                                     <StageProgress candidate={candidate} />
@@ -1405,6 +1404,27 @@
                                                         {/if}
                                                     </div>
                                                 </form>
+                                            </div>
+                                        {/if}
+
+                                        {#if isCompactView}
+                                            <div class="action-buttons">
+                                                <button 
+                                                    class="btn btn-outline-primary btn-sm"
+                                                    onclick={() => handleEditClick(candidate)}
+                                                    title="Edit candidate"
+                                                    aria-label="Edit {candidate.name}"
+                                                >
+                                                    <i class="bi bi-pencil-square"></i>
+                                                </button>
+                                                <button 
+                                                    class="btn btn-outline-danger btn-sm"
+                                                    onclick={() => deleteCandidate(candidate.id)}
+                                                    title="Delete candidate"
+                                                    aria-label="Delete {candidate.name}"
+                                                >
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
                                             </div>
                                         {/if}
                                     </div>
@@ -1761,5 +1781,21 @@
 
     input[type="file"]:not([data-filename])::before {
         content: 'Choose file';
+    }
+
+    .card.compact {
+        width: calc(100% - 50px) !important;
+        margin-right: auto !important;
+        transition: width 0.3s ease, margin-right 0.3s ease;
+        position: relative;
+    }
+
+    .action-buttons {
+        position: absolute;
+        right: -55px;
+        top: 1rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
     }
 </style> 
