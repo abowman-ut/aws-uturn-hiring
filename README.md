@@ -4,6 +4,12 @@ A modern, full-stack hiring platform built with SvelteKit 2.0 and AWS services, 
 
 ## 🚀 Features
 
+### Authentication & Authorization
+- Secure user authentication with AWS Amplify
+- Role-based access control
+- Persistent session management
+- Secure credential handling
+
 ### Position Management
 - Create and manage job positions with detailed requirements
 - Track position status (Open, On Hold, Cancelled, Filled)
@@ -38,18 +44,22 @@ A modern, full-stack hiring platform built with SvelteKit 2.0 and AWS services, 
 - SvelteKit 2.0
 - Svelte 5 with Runes
 - Chart.js for data visualization
-- Bootstrap CSS, JS, Icons
+- Bootstrap 5.3.3
+- Bootstrap Icons 1.11.3
 
-### Backend
-- AWS Lambda
-- AWS DynamoDB
-- AWS Amplify for deployment
+### Backend & Infrastructure
+- AWS Amplify for authentication and deployment
+- AWS Lambda for serverless functions
+- AWS DynamoDB for data storage
+- AWS S3 for file storage
+- AWS SDK v3 for AWS service integration
 
 ## 📋 Prerequisites
 
 - Node.js 18 or higher
 - AWS account with appropriate permissions
 - AWS CLI configured with credentials
+- AWS Amplify CLI installed and configured
 - Understanding of SvelteKit and AWS services
 
 ## ⚙️ Environment Setup
@@ -65,14 +75,23 @@ A modern, full-stack hiring platform built with SvelteKit 2.0 and AWS services, 
    npm install
    ```
 
-3. Configure environment variables:
-   Create a `.env` file in the project root:
-   ```
-   MY_AWS_ACCESS_KEY_ID=your_access_key
-   MY_AWS_SECRET_ACCESS_KEY=your_secret_key
+3. Configure AWS Amplify:
+   ```bash
+   amplify init
+   amplify add auth
+   amplify push
    ```
 
-4. Set up DynamoDB tables:
+4. Configure environment variables:
+   Create a `.env` file in the project root:
+   ```
+   VITE_AWS_REGION=your_aws_region
+   VITE_USER_POOL_ID=your_user_pool_id
+   VITE_USER_POOL_WEB_CLIENT_ID=your_web_client_id
+   VITE_IDENTITY_POOL_ID=your_identity_pool_id
+   ```
+
+5. Set up DynamoDB tables:
    - Development:
      ```bash
      aws dynamodb create-table --table-name uturn-positions-local --attribute-definitions AttributeName=id,AttributeType=S --key-schema AttributeName=id,KeyType=HASH --provisioned-throughput ReadCapacityUnits=5,WriteCapacityUnits=5
@@ -96,12 +115,14 @@ A modern, full-stack hiring platform built with SvelteKit 2.0 and AWS services, 
    http://localhost:5173
    ```
 
-3. Access the testing interface at:
-   ```
-   http://localhost:5173/tests
-   ```
-
 ## 📚 API Documentation
+
+### Authentication API
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/auth/signin` | POST | User sign in |
+| `/api/auth/signout` | POST | User sign out |
+| `/api/auth/session` | GET | Get current session |
 
 ### Positions API
 | Endpoint | Method | Description |
@@ -127,12 +148,15 @@ A modern, full-stack hiring platform built with SvelteKit 2.0 and AWS services, 
 src/
 ├── lib/
 │   ├── components/      # Reusable UI components
+│   ├── auth/           # Authentication logic
 │   ├── hiring-process/  # Hiring process logic
-│   └── dynamodb.js      # DynamoDB configuration
+│   ├── dynamodb.js     # DynamoDB configuration
+│   └── amplify.js      # Amplify configuration
 ├── routes/
 │   ├── api/
-│   │   ├── positions/   # Position endpoints
-│   │   └── candidates/  # Candidate endpoints
+│   │   ├── auth/       # Authentication endpoints
+│   │   ├── positions/  # Position endpoints
+│   │   └── candidates/ # Candidate endpoints
 │   ├── tests/          # Testing interface
 │   └── +page.svelte    # Main pages
 └── app.html            # HTML template
@@ -140,44 +164,12 @@ src/
 
 ## 🔒 Security Considerations
 
+- AWS Amplify authentication
 - Environment-specific configuration
 - Secure credential handling
 - Input validation
 - Error handling
 - Rate limiting
 - CORS configuration
+- Session management
 
-## 🧪 Testing
-
-1. Generate test data:
-   ```bash
-   npm run test:generate
-   ```
-
-2. Run tests:
-   ```bash
-   npm run test
-   ```
-
-3. Clean up test data:
-   ```bash
-   npm run test:cleanup
-   ```
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## 📝 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-- SvelteKit team for the amazing framework
-- AWS for the cloud infrastructure
-- All contributors who have helped improve this project
