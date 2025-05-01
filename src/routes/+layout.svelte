@@ -4,9 +4,9 @@
 	import NavBar from "$lib/components/NavBar.svelte";
 	import { browser } from '$app/environment';
 	import { applyColorVariables } from '$lib/utils/colors';
-    import { configureAmplify } from '$lib/amplify';
-    import { isAuthenticated, user, signOutUser } from '$lib/stores/auth';
+    import { isAuthenticated, user, signOutUser, isLoading } from '$lib/stores/auth';
     import { goto } from '$app/navigation';
+    import { page } from '$app/stores';
     import BtnAuthSignOut from '$lib/components/BtnAuthSignOut.svelte';
     import BtnAuthSignIn from '$lib/components/BtnAuthSignIn.svelte';
 
@@ -17,15 +17,14 @@
 		applyColorVariables();
 	}
 
-	    // Configure Amplify on mount
-		$effect(() => {
-        configureAmplify();
-    });
-
-    // Effect to handle navigation after sign out
+    // Effect to handle navigation based on auth state
     $effect(() => {
-        if (!$isAuthenticated) {
-            goto('/auth');
+        if (browser && !$isLoading) {
+            if (!$isAuthenticated && $page.url.pathname !== '/auth') {
+                goto('/auth');
+            } else if ($isAuthenticated && $page.url.pathname === '/auth') {
+                goto('/');
+            }
         }
     });
 </script>

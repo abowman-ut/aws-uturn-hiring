@@ -1,7 +1,9 @@
 import { signIn, signUp, signOut, confirmSignUp, getCurrentUser } from 'aws-amplify/auth';
 import { writable, derived } from 'svelte/store';
+import { configureAmplify } from '../amplify';
 
 export const user = writable(null);
+export const isLoading = writable(true);
 export const isAuthenticated = derived(user, ($user) => {
     console.log('Checking authentication state:', { hasUser: !!$user });
     return !!$user;
@@ -83,15 +85,19 @@ if (typeof window !== 'undefined') {
     const initializeAuth = async () => {
         console.log('Initializing auth state');
         try {
+            // Ensure Amplify is configured first
+            await configureAmplify();
             const currentUser = await getCurrentUser();
             console.log('✅ Found authenticated user:', { currentUser });
             user.set(currentUser);
         } catch (error) {
-            console.log('❌ No authenticated user found');
+            console.log('❌ No authenticated user found:', error);
             user.set(null);
+        } finally {
+            isLoading.set(false);
         }
     };
-
-    // Initialize after a short delay to ensure Amplify is configured
-    setTimeout(initializeAuth, 0);
+    
+    // Initialize immediately and handle any errors
+    initializeAuth().catch(console.error);
 } 
