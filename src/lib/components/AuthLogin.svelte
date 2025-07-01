@@ -105,16 +105,16 @@
                 context="auth"
             />
 
-            {#if showSignUp}
-                <button
+            <!-- {#if showSignUp} -->
+                <!-- <button
                     type="button"
                     class="btn btn-outline-primary"
                     onclick={onSignUp}
                 >
                     <i class="bi bi-person-plus me-2"></i>
                     {signUpText}
-                </button>
-            {/if}
+                </button> -->
+            <!-- {/if} -->
         </div>
     </form>
 </div> 

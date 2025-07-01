@@ -1,4 +1,4 @@
-import { signIn, signUp, signOut, confirmSignUp, getCurrentUser } from 'aws-amplify/auth';
+import { signIn, signUp, signOut, confirmSignUp, getCurrentUser, fetchUserAttributes, fetchAuthSession } from 'aws-amplify/auth';
 import { writable, derived } from 'svelte/store';
 import { configureAmplify } from '../amplify';
 
@@ -88,8 +88,13 @@ if (typeof window !== 'undefined') {
             // Ensure Amplify is configured first
             await configureAmplify();
             const currentUser = await getCurrentUser();
+            const userAttributes = await fetchUserAttributes(currentUser);
+            const session = await fetchAuthSession();
+            const groups = session.tokens?.accessToken?.payload?.['cognito:groups'] || [];
+            console.log('✅ User attributes:', { userAttributes });
             console.log('✅ Found authenticated user:', { currentUser });
-            user.set(currentUser);
+            console.log('✅ User groups:', { groups });
+            user.set({ ...currentUser, attributes: userAttributes, groups });
         } catch (error) {
             console.log('❌ No authenticated user found:', error);
             user.set(null);

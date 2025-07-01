@@ -8,6 +8,7 @@
         userId: $user?.userId || 'Not available',
         attributes: $user?.attributes || {}
     });
+    console.log($user);
 </script>
 
 <div class="container py-5">
@@ -44,21 +45,16 @@
                         </div>
                     </div>
 
-                    {#if Object.keys(userInfo.attributes).length > 0}
-                        <div class="mb-4">
-                            <h5 class="text-muted mb-3">Additional Attributes</h5>
-                            <div class="list-group">
-                                {#each Object.entries(userInfo.attributes) as [key, value]}
-                                    <div class="list-group-item">
-                                        <div class="d-flex justify-content-between align-items-center">
-                                            <span class="text-muted">{key}</span>
-                                            <span>{value}</span>
-                                        </div>
-                                    </div>
-                                {/each}
-                            </div>
-                        </div>
-                    {/if}
+                    {#if $user?.groups?.length}
+                    <div class="mb-4">
+                      <h5 class="text-muted mb-3">Group Membership</h5>
+                      <ul class="list-group">
+                        {#each $user.groups as group}
+                          <li class="list-group-item">{group}</li>
+                        {/each}
+                      </ul>
+                    </div>
+                  {/if}
 
                     <div class="text-center mt-4">
                         <button class="btn btn-outline-primary" onclick={() => window.location.reload()}>
