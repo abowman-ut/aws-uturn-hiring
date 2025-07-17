@@ -24,6 +24,8 @@
     let resumeViewUrl = $state(null);  // Add state for resume view URL
     let showResumeViewer = $state(false);  // Add state for resume viewer
     let currentResume = $state(null);  // Add state for current resume being viewed
+    let showNotesViewer = $state(false);  // Add state for notes viewer
+    let currentNotes = $state(null);  // Add state for current notes being viewed
     let activeDropdown = $state(null);
     let emailError = $state('');  // Add state for email validation error
     let windowWidth = $state(0);  // Add window width state
@@ -511,6 +513,81 @@
     function toggleCompactView() {
         isCompactView = !isCompactView;
         console.log('Compact view:', isCompactView); // Debug log
+    }
+
+    // Add function to handle notes button click
+    async function handleNotesClick(event, candidate) {
+        event.preventDefault();
+        
+        try {
+            // Get existing notes if any
+            const response = await fetch(`/api/candidates/notes?candidateId=${candidate.id}`);
+            let notes = '';
+            let notesKey = null;
+            
+            if (response.ok) {
+                const data = await response.json();
+                notes = data.notes || '';
+                notesKey = data.key;
+            }
+            
+            currentNotes = {
+                candidateId: candidate.id,
+                candidateName: candidate.name,
+                notes: notes,
+                key: notesKey
+            };
+            showNotesViewer = true;
+        } catch (error) {
+            console.error('Error loading notes:', error);
+            // Initialize with empty notes if loading fails
+            currentNotes = {
+                candidateId: candidate.id,
+                candidateName: candidate.name,
+                notes: '',
+                key: null
+            };
+            showNotesViewer = true;
+        }
+    }
+
+    async function saveNotes() {
+        if (!currentNotes) return;
+        
+        try {
+            const response = await fetch('/api/candidates/notes', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    candidateId: currentNotes.candidateId,
+                    notes: currentNotes.notes,
+                    key: currentNotes.key
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to save notes');
+            }
+
+            const { key } = await response.json();
+            currentNotes.key = key;
+            
+            // Update the candidate in the list to reflect notes status
+            candidates = candidates.map(c => 
+                c.id === currentNotes.candidateId 
+                    ? { ...c, hasNotes: currentNotes.notes.trim().length > 0 }
+                    : c
+            );
+            
+        } catch (error) {
+            console.error('Error saving notes:', error);
+            alert('Failed to save notes. Please try again.');
+        }
+    }
+
+    function closeNotesViewer() {
+        showNotesViewer = false;
+        currentNotes = null;
     }
 </script>
 
@@ -1222,6 +1299,14 @@
                                             </div>
                                             <div class="d-flex flex-column align-items-end">
                                                 <div class="d-flex gap-2">
+                                                    <button 
+                                                        class="btn btn-outline-warning btn-sm"
+                                                        onclick={(e) => handleNotesClick(e, candidate)}
+                                                        title="Add Notes"
+                                                        aria-label="Add notes for {candidate.name}"
+                                                    >
+                                                        <i class="bi bi-journal-text"></i>
+                                                    </button>
                                                     {#if candidate.expectedSalary?.amount > 0}
                                                         <button 
                                                             class="btn btn-outline-success btn-sm"
@@ -1555,6 +1640,45 @@
     </div>
 {/if}
 
+{#if showNotesViewer}
+    <div class="resume-viewer-overlay" transition:fade={{ duration: 200 }}>
+        <div class="resume-viewer" transition:slide={{ duration: 300 }}>
+            <div class="resume-viewer-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-journal-text me-2"></i>
+                    Notes for {currentNotes.candidateName}
+                </h5>
+                <div class="d-flex gap-2">
+                    <button 
+                        class="btn btn-sm btn-outline-success"
+                        onclick={saveNotes}
+                        title="Save notes"
+                        aria-label="Save notes"
+                    >
+                        <i class="bi bi-check me-1"></i>
+                        Save
+                    </button>
+                    <button 
+                        class="btn-close" 
+                        onclick={closeNotesViewer}
+                        aria-label="Close notes viewer"
+                    ></button>
+                </div>
+            </div>
+            <div class="resume-viewer-content">
+                <div class="notes-editor">
+                    <textarea 
+                        class="form-control h-100"
+                        bind:value={currentNotes.notes}
+                        placeholder="Add your notes about this candidate..."
+                        style="resize: none; border: none; outline: none; font-family: inherit;"
+                    ></textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+{/if}
+
 <style>
     .skeleton-line {
         background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
@@ -1847,5 +1971,25 @@
         display: flex;
         flex-direction: column;
         gap: 0.5rem;
+    }
+
+    .notes-editor {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .notes-editor textarea {
+        flex: 1;
+        font-size: 0.9rem;
+        line-height: 1.5;
+        padding: 1rem;
+        background-color: #f8f9fa;
+        border-radius: 0.375rem;
+    }
+
+    .notes-editor textarea:focus {
+        background-color: white;
+        box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
     }
 </style> 
